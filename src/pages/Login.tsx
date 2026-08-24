@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Code2, Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
-import { loginAdmin } from '../api/admin';
+import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { loginAdmin, type LoginSession } from '../api/admin';
+import { CompanyLogo } from '../components/ui/CompanyLogo';
 
 interface LoginProps {
-  onLoginSuccess: () => void;
+  onLoginSuccess: (session: LoginSession) => void;
 }
 
 export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
@@ -29,9 +30,15 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     setIsLoading(false);
 
     if (response.success && response.token) {
+      const loggedInEmail = response.admin?.email || email;
       localStorage.setItem('logixmart_token', response.token);
-      localStorage.setItem('logixmart_admin_email', response.admin?.email || email);
-      onLoginSuccess();
+      localStorage.setItem('logixmart_admin_email', loggedInEmail);
+      onLoginSuccess({
+        email: loggedInEmail,
+        password,
+        name: response.admin?.name,
+        role: response.admin?.role,
+      });
     } else {
       setError(response.message || 'Invalid operator email or access passcode');
     }
@@ -46,8 +53,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       <div className="glass-panel w-full max-w-[420px] p-10 z-10 flex flex-col gap-8 shadow-2xl animate-fade-in">
         {/* Header Logo */}
         <div className="flex flex-col items-center gap-2 text-center">
-          <div className="text-accent-primary flex items-center justify-center mb-2">
-            <Code2 size={38} />
+          <div className="flex items-center justify-center mb-2 w-[56px] h-[56px] rounded-xl border border-brand-border bg-brand-card/80 shadow-sm p-2.5">
+            <CompanyLogo className="w-full h-full" />
           </div>
           <h1 className="text-2xl font-bold text-text-primary tracking-tight">Logixmart</h1>
           <p className="text-xs text-text-muted">Developer Console Gateway</p>
@@ -124,10 +131,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             {isLoading ? (
               <>
                 <span className="w-[18px] h-[18px] border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>Authenticating Console Session...</span>
+                <span>Authenticating...</span>
               </>
             ) : (
-              <span>Establish Console Session</span>
+              <span>Login</span>
             )}
           </button>
         </form>

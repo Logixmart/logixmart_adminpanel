@@ -22,6 +22,14 @@ import {
   deleteBlog 
 } from '../api/blogs';
 
+function resolveBlogImageUrl(imageUrl: string): string {
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+  const origin = import.meta.env.VITE_API_URL as string;
+  return `${origin}${imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`}`;
+}
+
 export const BlogsManagement: React.FC = () => {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -93,11 +101,7 @@ export const BlogsManagement: React.FC = () => {
     setTitle(blog.title);
     setDescription(blog.description);
     setImageFile(null);
-    // Support relative paths if backend is configured differently
-    const fullImageUrl = blog.imageUrl.startsWith('http') 
-      ? blog.imageUrl 
-      : `http://localhost:5000${blog.imageUrl}`;
-    setImagePreview(fullImageUrl);
+    setImagePreview(blog.imageUrl ? resolveBlogImageUrl(blog.imageUrl) : null);
     setFormError(null);
     setIsFormModalOpen(true);
   };
@@ -118,8 +122,8 @@ export const BlogsManagement: React.FC = () => {
         return;
       }
       // Validate file type
-      if (!file.type.match('image.*')) {
-        setFormError('Only image files are allowed.');
+      if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
+        setFormError('Only JPEG, JPG, PNG, or WEBP images are allowed.');
         return;
       }
 
@@ -145,8 +149,8 @@ export const BlogsManagement: React.FC = () => {
         setFormError('Image file size must be less than 5MB.');
         return;
       }
-      if (!file.type.match('image.*')) {
-        setFormError('Only image files are allowed.');
+      if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
+        setFormError('Only JPEG, JPG, PNG, or WEBP images are allowed.');
         return;
       }
       setFormError(null);
@@ -179,10 +183,6 @@ export const BlogsManagement: React.FC = () => {
     }
     if (!description.trim()) {
       setFormError('Description is required.');
-      return;
-    }
-    if (modalMode === 'create' && !imageFile) {
-      setFormError('An image file is required for new blog posts.');
       return;
     }
 
@@ -424,9 +424,7 @@ export const BlogsManagement: React.FC = () => {
         /* Blog Grid List */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {sortedBlogs.map((blog) => {
-            const fullImageUrl = blog.imageUrl.startsWith('http') 
-              ? blog.imageUrl 
-              : `http://localhost:5000${blog.imageUrl}`;
+            const fullImageUrl = blog.imageUrl ? resolveBlogImageUrl(blog.imageUrl) : null;
             return (
               <div 
                 key={blog.id} 
@@ -434,15 +432,20 @@ export const BlogsManagement: React.FC = () => {
               >
                 {/* Blog Image Header */}
                 <div className="h-44 w-full bg-brand-dark relative overflow-hidden border-b border-brand-border">
-                  <img 
-                    src={fullImageUrl} 
-                    alt={blog.title} 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    onError={(e) => {
-                      // fallback for image load error
-                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format&fit=crop';
-                    }}
-                  />
+                  {fullImageUrl ? (
+                    <img 
+                      src={fullImageUrl} 
+                      alt={blog.title} 
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format&fit=crop';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-text-muted">
+                      <ImageIcon size={32} />
+                    </div>
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-brand-dark via-transparent to-transparent opacity-60" />
                   
                   {/* Category / Date Badge */}
@@ -529,7 +532,7 @@ export const BlogsManagement: React.FC = () => {
 
           {/* Image Upload field */}
           <div className="flex flex-col gap-1.5 relative">
-            <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Featured Image</label>
+            <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Featured Image (optional)</label>
             
             {imagePreview ? (
               /* Image Preview Area */
@@ -563,7 +566,7 @@ export const BlogsManagement: React.FC = () => {
                   type="file"
                   ref={fileInputRef}
                   onChange={handleImageChange}
-                  accept="image/*"
+                  accept="image/jpeg,image/jpg,image/png,image/webp,.jpeg,.jpg,.png,.webp"
                   className="hidden"
                   disabled={isSubmitting}
                 />
@@ -575,7 +578,7 @@ export const BlogsManagement: React.FC = () => {
                     Click to upload or drag & drop
                   </span>
                   <span className="text-[10px] text-text-muted mt-1">
-                    JPEG, JPG, PNG, GIF, or WEBP (Max 5MB)
+                    JPEG, JPG, PNG, or WEBP (Max 5MB) — optional
                   </span>
                 </div>
               </div>

@@ -1,10 +1,33 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_URL;
+
+const blogsApi = axios.create({
+  baseURL: `${API_URL}/api/blogs`,
+});
+
+blogsApi.interceptors.request.use((config) => {
+  const token = localStorage.getItem('logixmart_token');
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  // Let the browser set multipart boundary when sending FormData
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  } else if (!config.headers['Content-Type']) {
+    config.headers['Content-Type'] = 'application/json';
+  }
+
+  return config;
+});
 
 export interface Blog {
   id: string;
   title: string;
   description: string;
-  imageUrl: string;
+  imageUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -28,23 +51,18 @@ export interface ActionResponse {
   data?: Blog;
 }
 
-const getAuthHeaders = (): Record<string, string> => {
-  const token = localStorage.getItem('logixmart_token');
-  return token ? { 'Authorization': `Bearer ${token}` } : {};
-};
-
 /**
  * Fetch all blogs from the backend, sorted by newest first.
  */
 export async function getAllBlogs(): Promise<BlogsResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/blogs`);
-    const data = await response.json();
-    return data;
-  } catch (error) {
+    const response = await blogsApi.get<BlogsResponse>('/');
+    return response.data;
+  } catch {
     return {
       success: false,
       message: 'Unable to connect to the backend server. Make sure it is running.',
+      data: [],
     };
   }
 }
@@ -54,10 +72,9 @@ export async function getAllBlogs(): Promise<BlogsResponse> {
  */
 export async function getBlogById(id: string): Promise<SingleBlogResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/blogs/${id}`);
-    const data = await response.json();
-    return data;
-  } catch (error) {
+    const response = await blogsApi.get<SingleBlogResponse>(`/${id}`);
+    return response.data;
+  } catch {
     return {
       success: false,
       message: 'Failed to retrieve blog details.',
@@ -67,28 +84,22 @@ export async function getBlogById(id: string): Promise<SingleBlogResponse> {
 
 /**
  * Create a new blog post. Needs admin authorization (JWT).
- * @param formData - FormData object containing title, description, and image file
+ * @param formData - FormData with required title and description; image file is optional
  */
 export async function createBlog(formData: FormData): Promise<ActionResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/blogs`, {
-      method: 'POST',
-      headers: {
-        ...getAuthHeaders(),
-        // Note: Do not set Content-Type header when sending FormData; 
-        // the browser will automatically set it along with the boundary string.
-      },
-      body: formData,
-    });
-    const data = await response.json();
-    if (!response.ok) {
+    const response = await blogsApi.post<ActionResponse>('/', formData);
+    const data = response.data;
+
+    if (!data.success) {
       return {
         success: false,
         message: data.message || 'Failed to create blog post.',
       };
     }
+
     return data;
-  } catch (error) {
+  } catch {
     return {
       success: false,
       message: 'Network error occurred while creating blog post.',
@@ -99,26 +110,22 @@ export async function createBlog(formData: FormData): Promise<ActionResponse> {
 /**
  * Update an existing blog post by ID. Needs admin authorization (JWT).
  * @param id - Blog ID to update
- * @param formData - FormData object containing optional title, description, or image file
+ * @param formData - FormData with optional title, description, or image file
  */
 export async function updateBlog(id: string, formData: FormData): Promise<ActionResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/blogs/${id}`, {
-      method: 'PUT',
-      headers: {
-        ...getAuthHeaders(),
-      },
-      body: formData,
-    });
-    const data = await response.json();
-    if (!response.ok) {
+    const response = await blogsApi.put<ActionResponse>(`/${id}`, formData);
+    const data = response.data;
+
+    if (!data.success) {
       return {
         success: false,
         message: data.message || 'Failed to update blog post.',
       };
     }
+
     return data;
-  } catch (error) {
+  } catch {
     return {
       success: false,
       message: 'Network error occurred while updating blog post.',
@@ -132,22 +139,18 @@ export async function updateBlog(id: string, formData: FormData): Promise<Action
  */
 export async function deleteBlog(id: string): Promise<ActionResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/blogs/${id}`, {
-      method: 'DELETE',
-      headers: {
-        ...getAuthHeaders(),
-        'Content-Type': 'application/json',
-      },
-    });
-    const data = await response.json();
-    if (!response.ok) {
+    const response = await blogsApi.delete<ActionResponse>(`/${id}`);
+    const data = response.data;
+
+    if (!data.success) {
       return {
         success: false,
         message: data.message || 'Failed to delete blog post.',
       };
     }
+
     return data;
-  } catch (error) {
+  } catch {
     return {
       success: false,
       message: 'Network error occurred while deleting blog post.',

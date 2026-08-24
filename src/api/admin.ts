@@ -1,12 +1,51 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_URL;
+
+const adminApi = axios.create({
+  baseURL: `${API_URL}/api/admin`,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+adminApi.interceptors.request.use((config) => {
+  const token = localStorage.getItem('logixmart_token');
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
+
+export interface AdminUser {
+  email: string;
+  name?: string;
+  role?: string;
+}
 
 export interface LoginResponse {
   success: boolean;
   message?: string;
   token?: string;
-  admin?: {
-    email: string;
-  };
+  admin?: AdminUser;
+}
+
+export interface LoginSession {
+  email: string;
+  password: string;
+  name?: string;
+  role?: string;
+}
+
+export function displayNameFromEmail(email: string): string {
+  const local = email.split('@')[0]?.trim() || 'Admin';
+  return local
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 }
 
 export interface HealthResponse {
@@ -20,17 +59,14 @@ export interface HealthResponse {
  */
 export async function loginAdmin(email: string, password: string): Promise<LoginResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
+    const response = await adminApi.post<LoginResponse>('/login', {
+      email,
+      password,
     });
 
-    const data = await response.json();
+    const data = response.data;
 
-    if (!response.ok) {
+    if (!data.success) {
       return {
         success: false,
         message: data.message || 'Authentication failed',
@@ -43,7 +79,7 @@ export async function loginAdmin(email: string, password: string): Promise<Login
       admin: data.admin,
       message: data.message,
     };
-  } catch (error) {
+  } catch {
     return {
       success: false,
       message: 'Unable to connect to the backend server. Make sure it is running.',
@@ -53,27 +89,28 @@ export async function loginAdmin(email: string, password: string): Promise<Login
 
 /**
  * Query backend health status to verify if the server is UP.
+ * Hits /api/health (not under /admin).
  */
 export async function checkServerHealth(): Promise<HealthResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/health`, {
-      method: 'GET',
+    const response = await axios.get<HealthResponse>(`${API_URL}/api/health`, {
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
     });
 
-    if (!response.ok) {
+    const data = response.data;
+
+    if (!data.success) {
       return { success: false, status: 'DOWN' };
     }
 
-    const data = await response.json();
     return {
       success: true,
       status: data.status || 'UP',
       timestamp: data.timestamp,
     };
-  } catch (error) {
+  } catch {
     return {
       success: false,
       status: 'DOWN',
@@ -86,18 +123,10 @@ export async function checkServerHealth(): Promise<HealthResponse> {
  */
 export async function logoutAdmin(): Promise<LoginResponse> {
   try {
-    const token = localStorage.getItem('logixmart_token');
-    const response = await fetch(`${API_BASE_URL}/admin/logout`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-      },
-    });
+    const response = await adminApi.post<LoginResponse>('/logout');
+    const data = response.data;
 
-    const data = await response.json();
-
-    if (!response.ok) {
+    if (!data.success) {
       return {
         success: false,
         message: data.message || 'Logout failed',
@@ -108,7 +137,7 @@ export async function logoutAdmin(): Promise<LoginResponse> {
       success: true,
       message: data.message,
     };
-  } catch (error) {
+  } catch {
     return {
       success: false,
       message: 'Unable to connect to the backend server.',

@@ -2,11 +2,13 @@ import React from 'react';
 import {
   ChevronLeft,
   ChevronRight,
-  Code,
   User,
   LogOut,
-  FileText
+  FileText,
+  Briefcase,
+  ClipboardList,
 } from 'lucide-react';
+import { CompanyLogo } from '../ui/CompanyLogo';
 
 interface SidebarProps {
   activeTab: string;
@@ -28,6 +30,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const menuItems = [
     { id: 'admin-details', label: 'Admin Profile', icon: <User size={20} /> },
     { id: 'blogs', label: 'Blogs Management', icon: <FileText size={20} /> },
+    { id: 'jobs', label: 'Jobs Management', icon: <Briefcase size={20} /> },
+    { id: 'job-applications', label: 'Job Applications', icon: <ClipboardList size={20} /> },
   ];
 
   const getInitials = (fullName: string) => {
@@ -40,12 +44,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         }`}
     >
       {/* Brand Header */}
-      <div className={`h-[70px] flex items-center border-b border-brand-border gap-1 overflow-hidden ${collapsed ? 'px-0 justify-center' : 'px-4'
+      <div className={`h-[70px] flex items-center border-b border-brand-border gap-2.5 overflow-hidden ${collapsed ? 'px-0 justify-center' : 'px-4'
         }`}>
-        <div className="text-accent-primary flex items-center justify-center min-w-[32px]">
-          <Code size={20} />
+        <div className="flex items-center justify-center min-w-[32px] w-8 h-8">
+          <CompanyLogo className="w-[28px] h-[28px]" />
         </div>
-        <span className={`text-xl font-bold tracking-tight whitespace-nowrap transition-opacity duration-300 text-text-primary ${collapsed ? 'opacity-0 w-0 pointer-events-none' : 'opacity-100'
+        <span className={`text-[15px] font-bold tracking-tight whitespace-nowrap transition-opacity duration-300 text-text-primary ${collapsed ? 'opacity-0 w-0 pointer-events-none' : 'opacity-100'
           }`}>
           Logix<span className="text-accent-primary">mart</span> IT Solutions
         </span>

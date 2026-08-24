@@ -65,7 +65,23 @@
   --glass-bg: rgba(255, 255, 255, 0.7);
 }
 
+/* Black logo → white in dark mode; original black in light mode */
+.company-logo {
+  filter: invert(1);
+}
+
+:root.light .company-logo {
+  filter: none;
+}
+
 /* Custom Scrollbar Styles */
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background-color: var(--color-brand-dark);
+}
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;

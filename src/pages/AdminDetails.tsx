@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
-import { Eye, EyeOff, Edit3, Shield, Mail, User, Terminal } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Eye, EyeOff, Edit3, Shield, Mail, User } from 'lucide-react';
 
 interface AdminInfo {
   name: string;
   email: string;
   password: string;
   role: string;
-  terminal: string;
   lastLogin: string;
 }
 
@@ -23,6 +22,12 @@ export const AdminDetails: React.FC<AdminDetailsProps> = ({ adminInfo, onUpdateA
   const [password, setPassword] = useState(adminInfo.password);
   const [editShowPassword, setEditShowPassword] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  useEffect(() => {
+    setName(adminInfo.name);
+    setEmail(adminInfo.email);
+    setPassword(adminInfo.password);
+  }, [adminInfo.name, adminInfo.email, adminInfo.password]);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -165,13 +170,6 @@ export const AdminDetails: React.FC<AdminDetailsProps> = ({ adminInfo, onUpdateA
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div className="flex flex-col gap-1.5 relative">
-                <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Terminal Authority</span>
-                <div className="flex items-center justify-between bg-brand-dark/40 border border-brand-border rounded-md px-4 py-3 min-h-[46px] text-[13.5px]">
-                  <span className="text-text-primary font-medium break-all">{adminInfo.terminal}</span>
-                  <Terminal size={14} style={{ color: 'var(--text-muted)' }} />
-                </div>
-              </div>
               <div className="flex flex-col gap-1.5 relative">
                 <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Session Established</span>
                 <div className="flex items-center justify-between bg-brand-dark/40 border border-brand-border rounded-md px-4 py-3 min-h-[46px] text-[13.5px]">
