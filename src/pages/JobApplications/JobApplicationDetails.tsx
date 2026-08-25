@@ -144,7 +144,6 @@ export default function JobApplicationDetails({
           Job Information
         </h2>
         <DetailRow label="Job Title" value={application.job?.title || '—'} />
-        <DetailRow label="Company" value={application.job?.companyName || '—'} />
         <DetailRow label="Location" value={application.job?.location || '—'} />
       </section>
 

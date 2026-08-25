@@ -38,6 +38,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         password,
         name: response.admin?.name,
         role: response.admin?.role,
+        id: response.admin?.id,
       });
     } else {
       setError(response.message || 'Invalid operator email or access passcode');

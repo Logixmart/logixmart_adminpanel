@@ -4,10 +4,8 @@ export interface JobPost {
   id: string;
   title: string;
   description: string;
-  companyName: string;
   location?: string | null;
   employmentType?: string | null;
-  salary?: string | null;
   experience?: string | null;
   skills: string[];
   responsibilities: string[];
@@ -21,10 +19,8 @@ export interface JobPost {
 export interface CreateJobPayload {
   title: string;
   description: string;
-  companyName: string;
   location?: string;
   employmentType?: string;
-  salary?: string;
   experience?: string;
   skills?: string[];
   responsibilities?: string[];

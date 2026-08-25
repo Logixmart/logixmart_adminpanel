@@ -1,4 +1,9 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import {
+  useEffect,
+  useState,
+  type ClipboardEvent,
+  type FormEvent,
+} from 'react';
 import {
   AlertCircle,
   ArrowLeft,
@@ -22,10 +27,8 @@ export interface CreateJobProps {
 const emptyForm = {
   title: '',
   description: '',
-  companyName: '',
   location: '',
   employmentType: '',
-  salary: '',
   experience: '',
   skills: '',
   responsibilities: '',
@@ -80,22 +83,73 @@ export default function CreateJob({
     };
   }, [mode, jobId]);
 
+  const handleListPaste = (
+    event: ClipboardEvent<HTMLTextAreaElement>,
+    field: 'responsibilities' | 'qualifications'
+  ) => {
+    event.preventDefault();
+    const pasted = normalizeListText(event.clipboardData.getData('text/plain'));
+    if (!pasted) return;
+
+    const { value } = event.currentTarget;
+    const selectionStart = event.currentTarget.selectionStart ?? value.length;
+    const selectionEnd = event.currentTarget.selectionEnd ?? value.length;
+    const before = value.slice(0, selectionStart);
+    const after = value.slice(selectionEnd);
+    const separatorBefore = before && !before.endsWith('\n') ? '\n' : '';
+    const separatorAfter = after && !after.startsWith('\n') ? '\n' : '';
+
+    setForm((prev) => ({
+      ...prev,
+      [field]: normalizeListText(
+        `${before}${separatorBefore}${pasted}${separatorAfter}${after}`
+      ),
+    }));
+  };
+
+  const handleSkillsPaste = (event: ClipboardEvent<HTMLInputElement>) => {
+    event.preventDefault();
+    const pasted = normalizeSkillsText(event.clipboardData.getData('text/plain'));
+    if (!pasted) return;
+
+    const { value } = event.currentTarget;
+    const selectionStart = event.currentTarget.selectionStart ?? value.length;
+    const selectionEnd = event.currentTarget.selectionEnd ?? value.length;
+    const before = value.slice(0, selectionStart);
+    const after = value.slice(selectionEnd);
+    const needsCommaBefore =
+      before.length > 0 && !before.endsWith(',') && !before.endsWith(' ');
+    const needsCommaAfter =
+      after.length > 0 && !after.startsWith(',') && !after.startsWith(' ');
+
+    setForm((prev) => ({
+      ...prev,
+      skills: normalizeSkillsText(
+        `${before}${needsCommaBefore ? ', ' : ''}${pasted}${needsCommaAfter ? ', ' : ''}${after}`
+      ),
+    }));
+  };
+
+  const autoResizeTextarea = (element: HTMLTextAreaElement | null) => {
+    if (!element) return;
+    element.style.height = 'auto';
+    element.style.height = `${element.scrollHeight}px`;
+  };
+
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError(null);
 
-    if (!form.title.trim() || !form.description.trim() || !form.companyName.trim()) {
-      setError('Title, company name, and description are required.');
+    if (!form.title.trim() || !form.description.trim()) {
+      setError('Title and description are required.');
       return;
     }
 
     const payload = {
       title: form.title.trim(),
       description: form.description.trim(),
-      companyName: form.companyName.trim(),
       location: form.location.trim() || undefined,
       employmentType: form.employmentType.trim() || undefined,
-      salary: form.salary.trim() || undefined,
       experience: form.experience.trim() || undefined,
       skills: parseList(form.skills),
       responsibilities: parseList(form.responsibilities),
@@ -173,18 +227,6 @@ export default function CreateJob({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className={labelClass}>Company Name</label>
-            <input
-              className={inputClass}
-              placeholder="Logixmart IT Solutions"
-              value={form.companyName}
-              onChange={(e) => setForm({ ...form, companyName: e.target.value })}
-              disabled={loading}
-              required
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
             <label className={labelClass}>Location</label>
             <input
               className={inputClass}
@@ -210,17 +252,6 @@ export default function CreateJob({
               <option value="Internship">Internship</option>
               <option value="Freelance">Freelance</option>
             </select>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className={labelClass}>Salary</label>
-            <input
-              className={inputClass}
-              placeholder="e.g., 8–12 LPA"
-              value={form.salary}
-              onChange={(e) => setForm({ ...form, salary: e.target.value })}
-              disabled={loading}
-            />
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -250,14 +281,27 @@ export default function CreateJob({
           <div className="flex flex-col gap-1.5 sm:col-span-2">
             <label className={labelClass}>Responsibilities</label>
             <textarea
+              ref={autoResizeTextarea}
               className={`${inputClass} resize-none min-h-[100px]`}
               placeholder={"One per line, e.g.\nBuild and ship product features\nCollaborate with design and QA"}
               value={form.responsibilities}
-              onChange={(e) => setForm({ ...form, responsibilities: e.target.value })}
+              onChange={(e) => {
+                setForm({ ...form, responsibilities: e.target.value });
+                autoResizeTextarea(e.currentTarget);
+              }}
+              onPaste={(e) => handleListPaste(e, 'responsibilities')}
+              onBlur={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  responsibilities: normalizeListText(e.target.value),
+                }))
+              }
               disabled={loading}
               rows={4}
             />
-            <span className="text-[10px] text-text-muted">One item per line (or comma-separated)</span>
+            <span className="text-[10px] text-text-muted">
+              Paste bullet lists or numbered lists — formatting is cleaned up automatically
+            </span>
           </div>
 
           <div className="flex flex-col gap-1.5 sm:col-span-2">
@@ -267,22 +311,44 @@ export default function CreateJob({
               placeholder="React, TypeScript, Node.js"
               value={form.skills}
               onChange={(e) => setForm({ ...form, skills: e.target.value })}
+              onPaste={handleSkillsPaste}
+              onBlur={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  skills: normalizeSkillsText(e.target.value),
+                }))
+              }
               disabled={loading}
             />
-            <span className="text-[10px] text-text-muted">Comma-separated skill tags</span>
+            <span className="text-[10px] text-text-muted">
+              Comma-separated — pasted lists are converted automatically
+            </span>
           </div>
 
           <div className="flex flex-col gap-1.5 sm:col-span-2">
             <label className={labelClass}>Qualifications</label>
             <textarea
+              ref={autoResizeTextarea}
               className={`${inputClass} resize-none min-h-[100px]`}
               placeholder={"One per line, e.g.\nBachelor's degree in CS or related field\n2+ years of React experience"}
               value={form.qualifications}
-              onChange={(e) => setForm({ ...form, qualifications: e.target.value })}
+              onChange={(e) => {
+                setForm({ ...form, qualifications: e.target.value });
+                autoResizeTextarea(e.currentTarget);
+              }}
+              onPaste={(e) => handleListPaste(e, 'qualifications')}
+              onBlur={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  qualifications: normalizeListText(e.target.value),
+                }))
+              }
               disabled={loading}
               rows={4}
             />
-            <span className="text-[10px] text-text-muted">One item per line (or comma-separated)</span>
+            <span className="text-[10px] text-text-muted">
+              Paste bullet lists or numbered lists — formatting is cleaned up automatically
+            </span>
           </div>
         </div>
 
@@ -328,9 +394,49 @@ export default function CreateJob({
   );
 }
 
-function parseList(value: string): string[] {
+function stripListPrefix(line: string): string {
+  return line
+    .replace(/^[\s]*[-–—•*·◦▪▸►●○]\s+/, '')
+    .replace(/^[\s]*>\s+/, '')
+    .replace(/^[\s]*\(\d+\)\s+/, '')
+    .replace(/^[\s]*\d+[.)]\s+/, '')
+    .replace(/^[\s]*[a-zA-Z][.)]\s+/, '')
+    .trim();
+}
+
+function normalizeListText(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+
+  let items = trimmed
+    .split(/\r?\n/)
+    .map((line) => stripListPrefix(line.trim()))
+    .filter(Boolean);
+
+  if (items.length === 1 && items[0].includes(',')) {
+    const commaSplit = items[0]
+      .split(',')
+      .map((item) => stripListPrefix(item.trim()))
+      .filter(Boolean);
+    if (commaSplit.length > 1) {
+      items = commaSplit;
+    }
+  }
+
+  return items.join('\n');
+}
+
+function normalizeSkillsText(value: string): string {
   return value
-    .split(/\n|,/)
+    .split(/[\n,;|]/)
+    .map((item) => stripListPrefix(item.trim()))
+    .filter(Boolean)
+    .join(', ');
+}
+
+function parseList(value: string): string[] {
+  return normalizeListText(value)
+    .split('\n')
     .map((item) => item.trim())
     .filter(Boolean);
 }
@@ -339,10 +445,8 @@ function jobToForm(job: JobPost) {
   return {
     title: job.title || '',
     description: job.description || '',
-    companyName: job.companyName || '',
     location: job.location || '',
     employmentType: job.employmentType || '',
-    salary: job.salary || '',
     experience: job.experience || '',
     skills: (job.skills || []).join(', '),
     responsibilities: (job.responsibilities || []).join('\n'),

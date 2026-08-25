@@ -20,6 +20,7 @@ adminApi.interceptors.request.use((config) => {
 });
 
 export interface AdminUser {
+  id?: string;
   email: string;
   name?: string;
   role?: string;
@@ -37,6 +38,7 @@ export interface LoginSession {
   password: string;
   name?: string;
   role?: string;
+  id?: string;
 }
 
 export function displayNameFromEmail(email: string): string {

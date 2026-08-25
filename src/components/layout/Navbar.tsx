@@ -26,11 +26,15 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab }) => {
   const getPageTitle = () => {
     switch (activeTab) {
       case 'admin-details':
-        return 'Administrator Credentials';
+        return 'Admin Profile';
       case 'blogs':
         return 'Blogs Management Portal';
       case 'jobs':
         return 'Jobs Management Portal';
+      case 'job-applications':
+        return 'Job Applications';
+      case 'query':
+        return 'Query Portal';
       default:
         return 'Console Gateway';
     }

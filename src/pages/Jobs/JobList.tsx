@@ -244,7 +244,7 @@ export default function JobList({ onCreate, onEdit, refreshKey = 0 }: JobListPro
             <table className="w-full text-left border-collapse min-w-[720px]">
               <thead>
                 <tr className="border-b border-brand-border bg-brand-dark/40">
-                  {['Title', 'Company', 'Location', 'Type', 'Status', 'Actions'].map((h) => (
+                  {['Title', 'Location', 'Type', 'Status', 'Actions'].map((h) => (
                     <th
                       key={h}
                       className="px-4 py-3 text-[10px] font-bold text-text-muted uppercase tracking-wider"
@@ -273,7 +273,6 @@ export default function JobList({ onCreate, onEdit, refreshKey = 0 }: JobListPro
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3.5 text-xs text-text-secondary">{job.companyName}</td>
                     <td className="px-4 py-3.5 text-xs text-text-secondary">
                       {job.location || '—'}
                     </td>

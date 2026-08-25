@@ -11,7 +11,6 @@ export type JobApplicationStatus =
 export interface JobApplicationJob {
   id: string;
   title: string;
-  companyName: string;
   location?: string | null;
 }
 
@@ -91,6 +90,48 @@ export async function updateJobApplicationStatus(
 
 export async function deleteJobApplication(id: string): Promise<void> {
   await jobApplicationApi.delete(`/${id}`);
+}
+
+export async function exportJobApplications(params?: {
+  search?: string;
+  status?: JobApplicationStatus | '';
+  jobId?: string;
+}): Promise<Blob> {
+  const query: Record<string, string> = {
+    _t: String(Date.now()),
+  };
+  if (params?.search?.trim()) {
+    query.search = params.search.trim();
+  }
+  if (params?.status) {
+    query.status = params.status;
+  }
+  if (params?.jobId?.trim()) {
+    query.jobId = params.jobId.trim();
+  }
+
+  const response = await jobApplicationApi.get('/export', {
+    params: query,
+    responseType: 'blob',
+    headers: {
+      'Cache-Control': 'no-cache',
+      Pragma: 'no-cache',
+    },
+  });
+
+  const blob = response.data as Blob;
+  if (blob.type && blob.type.includes('application/json')) {
+    const text = await blob.text();
+    let message = 'Export failed';
+    try {
+      message = JSON.parse(text).message || message;
+    } catch {
+      // ignore parse errors
+    }
+    throw new Error(message);
+  }
+
+  return blob;
 }
 
 export function resolveResumeUrl(resumeUrl: string | null | undefined): string | null {

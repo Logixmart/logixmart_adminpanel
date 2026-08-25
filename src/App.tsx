@@ -5,29 +5,38 @@ import { AdminDetails } from './pages/AdminDetails';
 import { BlogsManagement } from './pages/BlogsManagement';
 import JobsManagement from './pages/Jobs/JobsManagement';
 import JobApplicationsManagement from './pages/JobApplications/JobApplicationsManagement';
+import QueryManagement from './pages/Query/QueryManagement';
 import { logoutAdmin, displayNameFromEmail, type LoginSession } from './api/admin';
+import {
+  ADMIN_NAME_STORAGE_KEY,
+  ADMIN_ROLE_STORAGE_KEY,
+  isSuperAdmin,
+  roleLabel,
+} from './utils/auth';
 import './App.css';
-
-const DEFAULT_ADMIN_ROLE = 'Global System Administrator';
 
 const emptyAdminInfo = {
   name: '',
   email: '',
   password: '',
-  role: DEFAULT_ADMIN_ROLE,
+  role: '',
   lastLogin: '',
 };
 
 function formatLoginTime() {
   const now = new Date();
-  return now.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }) + ' - ' + now.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return (
+    now.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }) +
+    ' - ' +
+    now.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  );
 }
 
 function App() {
@@ -39,12 +48,15 @@ function App() {
     const token = localStorage.getItem('logixmart_token');
     const email = localStorage.getItem('logixmart_admin_email') || '';
     const lastLogin = localStorage.getItem('logixmart_admin_last_login') || '';
+    const role = localStorage.getItem(ADMIN_ROLE_STORAGE_KEY) || '';
+    const storedName = localStorage.getItem(ADMIN_NAME_STORAGE_KEY) || '';
     if (token && email) {
       setIsAuthenticated(true);
       setAdminInfo({
         ...emptyAdminInfo,
         email,
-        name: displayNameFromEmail(email),
+        name: storedName || displayNameFromEmail(email),
+        role,
         lastLogin,
       });
     }
@@ -56,18 +68,25 @@ function App() {
       if (updatedInfo.email) {
         localStorage.setItem('logixmart_admin_email', updatedInfo.email);
       }
+      if (updatedInfo.name) {
+        localStorage.setItem(ADMIN_NAME_STORAGE_KEY, updatedInfo.name);
+      }
       return next;
     });
   };
 
   const handleLoginSuccess = ({ email, password, name, role }: LoginSession) => {
     const lastLogin = formatLoginTime();
+    const resolvedName = name || displayNameFromEmail(email);
+    const resolvedRole = role || 'ADMIN';
     localStorage.setItem('logixmart_admin_last_login', lastLogin);
+    localStorage.setItem(ADMIN_ROLE_STORAGE_KEY, resolvedRole);
+    localStorage.setItem(ADMIN_NAME_STORAGE_KEY, resolvedName);
     setAdminInfo({
-      name: name || displayNameFromEmail(email),
+      name: resolvedName,
       email,
       password,
-      role: role || DEFAULT_ADMIN_ROLE,
+      role: resolvedRole,
       lastLogin,
     });
     setIsAuthenticated(true);
@@ -83,32 +102,38 @@ function App() {
     localStorage.removeItem('logixmart_token');
     localStorage.removeItem('logixmart_admin_email');
     localStorage.removeItem('logixmart_admin_last_login');
+    localStorage.removeItem(ADMIN_ROLE_STORAGE_KEY);
+    localStorage.removeItem(ADMIN_NAME_STORAGE_KEY);
     setAdminInfo(emptyAdminInfo);
     setIsAuthenticated(false);
   };
 
+  const renderAdminPage = () => (
+    <AdminDetails
+      adminInfo={{
+        ...adminInfo,
+        role: roleLabel(adminInfo.role),
+      }}
+      onUpdateAdmin={handleUpdateAdmin}
+      canManageAdmins={isSuperAdmin(adminInfo.role)}
+    />
+  );
+
   const renderActiveContent = () => {
     switch (activeTab) {
       case 'admin-details':
-        return (
-          <AdminDetails
-            adminInfo={adminInfo}
-            onUpdateAdmin={handleUpdateAdmin}
-          />
-        );
+      case 'admins':
+        return renderAdminPage();
       case 'blogs':
         return <BlogsManagement />;
       case 'jobs':
         return <JobsManagement />;
       case 'job-applications':
         return <JobApplicationsManagement />;
+      case 'query':
+        return <QueryManagement />;
       default:
-        return (
-          <AdminDetails
-            adminInfo={adminInfo}
-            onUpdateAdmin={handleUpdateAdmin}
-          />
-        );
+        return renderAdminPage();
     }
   };
 

@@ -1,52 +1,27 @@
 import { useEffect, useState } from 'react';
 import {
   AlertCircle,
-  Briefcase,
-  ClipboardList,
   Download,
   Eye,
   Loader2,
+  Mail,
+  MessageSquare,
   Search,
   Trash2,
   X,
 } from 'lucide-react';
 import { Modal } from '../../components/ui/Modal';
-import { getJobs, type JobPost } from '../../api/jobPost';
 import {
-  deleteJobApplication,
-  exportJobApplications,
-  getJobApplications,
-  type JobApplication,
-  type JobApplicationStatus,
-} from '../../api/jobApplication';
+  deleteContactSubmission,
+  exportContactSubmissions,
+  getContactSubmissions,
+  type ContactSubmission,
+} from '../../api/contact';
 import {
   ADMIN_ROLE_STORAGE_KEY,
   isSuperAdmin,
   triggerBlobDownload,
 } from '../../utils/auth';
-
-const STATUS_OPTIONS: JobApplicationStatus[] = [
-  'PENDING',
-  'REVIEWING',
-  'SHORTLISTED',
-  'INTERVIEW',
-  'SELECTED',
-  'REJECTED',
-];
-
-const STATUS_STYLES: Record<JobApplicationStatus, string> = {
-  PENDING: 'bg-accent-info/10 text-accent-info border-accent-info/20',
-  REVIEWING: 'bg-accent-primary/10 text-accent-primary border-accent-primary/20',
-  SHORTLISTED: 'bg-accent-secondary/10 text-accent-secondary border-accent-secondary/20',
-  INTERVIEW: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  SELECTED: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-  REJECTED: 'bg-accent-danger/10 text-accent-danger border-accent-danger/20',
-};
-
-export interface JobApplicationListProps {
-  onView: (id: string) => void;
-  refreshKey?: number;
-}
 
 function formatDate(value: string) {
   try {
@@ -60,22 +35,31 @@ function formatDate(value: string) {
   }
 }
 
-export default function JobApplicationList({
-  onView,
-  refreshKey = 0,
-}: JobApplicationListProps) {
-  const [applications, setApplications] = useState<JobApplication[]>([]);
-  const [jobs, setJobs] = useState<JobPost[]>([]);
+function formatDateTime(value: string) {
+  try {
+    return new Date(value).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return value;
+  }
+}
+
+export default function QueryManagement() {
+  const [queries, setQueries] = useState<ContactSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<JobApplicationStatus | ''>('');
-  const [jobId, setJobId] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-  const [selected, setSelected] = useState<JobApplication | null>(null);
+  const [selected, setSelected] = useState<ContactSubmission | null>(null);
+  const [isViewOpen, setIsViewOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [successBanner, setSuccessBanner] = useState<string | null>(null);
@@ -93,27 +77,19 @@ export default function JobApplicationList({
   }, [searchInput]);
 
   useEffect(() => {
-    getJobs({ page: 1, limit: 100 })
-      .then((res) => setJobs(res.data || []))
-      .catch(() => setJobs([]));
-  }, []);
+    loadQueries();
+  }, [search, page]);
 
-  useEffect(() => {
-    loadApplications();
-  }, [search, status, jobId, page, refreshKey]);
-
-  const loadApplications = async () => {
+  const loadQueries = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await getJobApplications({
+      const response = await getContactSubmissions({
         page,
         limit,
         search: search || undefined,
-        status: status || undefined,
-        jobId: jobId || undefined,
       });
-      setApplications(response.data || []);
+      setQueries(response.data || []);
       setTotal(response.pagination?.total ?? 0);
       setTotalPages(response.pagination?.totalPages ?? 1);
     } catch (err: unknown) {
@@ -121,8 +97,8 @@ export default function JobApplicationList({
         response?: { data?: { message?: string }; status?: number };
       };
       const apiMessage = axiosErr.response?.data?.message;
-      setError(apiMessage || 'Failed to load applications. Make sure the backend is running.');
-      setApplications([]);
+      setError(apiMessage || 'Failed to load queries. Make sure the backend is running.');
+      setQueries([]);
     } finally {
       setLoading(false);
     }
@@ -137,13 +113,14 @@ export default function JobApplicationList({
     if (!selected) return;
     setIsDeleting(true);
     try {
-      await deleteJobApplication(selected.id);
+      await deleteContactSubmission(selected.id);
       setIsDeleteOpen(false);
+      setIsViewOpen(false);
       setSelected(null);
-      showSuccess('Application deleted successfully.');
-      loadApplications();
+      showSuccess('Query deleted successfully.');
+      loadQueries();
     } catch {
-      setError('Failed to delete application.');
+      setError('Failed to delete query.');
       setIsDeleteOpen(false);
     } finally {
       setIsDeleting(false);
@@ -154,22 +131,19 @@ export default function JobApplicationList({
     if (!canExport) return;
     setIsExporting(true);
     try {
-      // Use current UI filters (including typed search before debounce settles)
       const activeSearch = searchInput.trim() || search;
-      const blob = await exportJobApplications({
+      const blob = await exportContactSubmissions({
         search: activeSearch || undefined,
-        status: status || undefined,
-        jobId: jobId || undefined,
       });
       const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-      triggerBlobDownload(blob, `job-applications-${stamp}.xlsx`);
-      const filterHint =
-        activeSearch || status || jobId
-          ? ' (current filters applied)'
-          : '';
-      showSuccess(`Applications exported to Excel${filterHint}.`);
+      triggerBlobDownload(blob, `queries-${stamp}.xlsx`);
+      showSuccess(
+        activeSearch
+          ? 'Queries exported to Excel (current filters applied).'
+          : 'Queries exported to Excel.'
+      );
     } catch {
-      setError('Failed to export applications. Super admin access required.');
+      setError('Failed to export queries. Super admin access required.');
     } finally {
       setIsExporting(false);
     }
@@ -180,11 +154,11 @@ export default function JobApplicationList({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-bold text-text-primary tracking-tight flex items-center gap-2">
-            <ClipboardList size={22} className="text-accent-primary" />
-            Job Applications
+            <MessageSquare size={22} className="text-accent-primary" />
+            Query
           </h1>
           <p className="text-xs text-text-muted">
-            Review candidate submissions, update status, and download resumes.
+            Contact form submissions from the website.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -200,14 +174,10 @@ export default function JobApplicationList({
               ) : (
                 <Download size={14} />
               )}
-              {searchInput || status || jobId
-                ? 'Download Filtered Excel'
-                : 'Download Excel'}
+              Download Excel
             </button>
           )}
-          <span className="text-xs text-text-secondary font-semibold">
-            {total} total
-          </span>
+          <span className="text-xs text-text-secondary font-semibold">{total} total</span>
         </div>
       </div>
 
@@ -222,7 +192,7 @@ export default function JobApplicationList({
           <Search className="absolute left-3 text-text-muted pointer-events-none" size={16} />
           <input
             type="text"
-            placeholder="Search by applicant name or email..."
+            placeholder="Search by name, email, subject, or message..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             className="w-full py-2 px-9 bg-brand-dark/50 border border-brand-border rounded-lg outline-none text-xs text-text-primary transition-all duration-200 focus:border-accent-primary focus:bg-brand-dark/85"
@@ -237,36 +207,6 @@ export default function JobApplicationList({
             </button>
           )}
         </div>
-        <select
-          value={status}
-          onChange={(e) => {
-            setStatus(e.target.value as JobApplicationStatus | '');
-            setPage(1);
-          }}
-          className="bg-brand-dark/50 border border-brand-border rounded-lg py-2 px-3 text-xs text-text-secondary outline-none cursor-pointer"
-        >
-          <option value="">All statuses</option>
-          {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-        <select
-          value={jobId}
-          onChange={(e) => {
-            setJobId(e.target.value);
-            setPage(1);
-          }}
-          className="bg-brand-dark/50 border border-brand-border rounded-lg py-2 px-3 text-xs text-text-secondary outline-none cursor-pointer max-w-[240px]"
-        >
-          <option value="">All jobs</option>
-          {jobs.map((job) => (
-            <option key={job.id} value={job.id}>
-              {job.title}
-            </option>
-          ))}
-        </select>
       </div>
 
       {error && (
@@ -278,7 +218,7 @@ export default function JobApplicationList({
           </div>
           <button
             type="button"
-            onClick={loadApplications}
+            onClick={loadQueries}
             className="ml-auto cursor-pointer font-bold text-[10px] uppercase tracking-wider py-1.5 px-3 bg-accent-danger/10 border border-accent-danger/20 rounded hover:bg-accent-danger/20 transition-all text-accent-danger"
           >
             Retry
@@ -289,19 +229,19 @@ export default function JobApplicationList({
       {loading ? (
         <div className="flex-1 flex flex-col items-center justify-center py-20 gap-3">
           <Loader2 className="animate-spin text-accent-primary" size={32} />
-          <span className="text-xs text-text-muted font-medium">Loading applications...</span>
+          <span className="text-xs text-text-muted font-medium">Loading queries...</span>
         </div>
-      ) : applications.length === 0 ? (
+      ) : queries.length === 0 ? (
         <div className="glass-panel py-16 px-6 flex flex-col items-center justify-center text-center gap-4 max-w-[500px] mx-auto w-full mt-4">
           <div className="w-16 h-16 rounded-full bg-brand-dark flex items-center justify-center border border-brand-border text-text-muted">
-            <Briefcase size={28} />
+            <Mail size={28} />
           </div>
           <div className="flex flex-col gap-1">
-            <h3 className="text-base font-bold text-text-primary">No Applications Found</h3>
+            <h3 className="text-base font-bold text-text-primary">No Queries Found</h3>
             <p className="text-xs text-text-secondary max-w-[340px]">
-              {search || status || jobId
-                ? 'Try adjusting search or filters.'
-                : 'Applications will appear here when candidates apply.'}
+              {search
+                ? 'Try adjusting your search.'
+                : 'Queries will appear here when visitors submit the contact form.'}
             </p>
           </div>
         </div>
@@ -312,7 +252,7 @@ export default function JobApplicationList({
               <table className="w-full text-left border-collapse min-w-[860px]">
                 <thead>
                   <tr className="border-b border-brand-border bg-brand-dark/40">
-                    {['Applicant', 'Email', 'Phone', 'Job', 'Status', 'Applied Date', 'Actions'].map(
+                    {['Name', 'Email', 'Phone', 'Subject', 'Message', 'Date', 'Actions'].map(
                       (h) => (
                         <th
                           key={h}
@@ -325,36 +265,35 @@ export default function JobApplicationList({
                   </tr>
                 </thead>
                 <tbody>
-                  {applications.map((app) => (
+                  {queries.map((query) => (
                     <tr
-                      key={app.id}
+                      key={query.id}
                       className="border-b border-brand-border/60 hover:bg-brand-hover/50 transition-colors"
                     >
                       <td className="px-4 py-3.5 text-[13px] font-semibold text-text-primary">
-                        {app.applicantName}
+                        {query.name}
                       </td>
-                      <td className="px-4 py-3.5 text-xs text-text-secondary">{app.email}</td>
+                      <td className="px-4 py-3.5 text-xs text-text-secondary">{query.email}</td>
                       <td className="px-4 py-3.5 text-xs text-text-secondary">
-                        {app.phone || '—'}
+                        {query.phone || '—'}
                       </td>
-                      <td className="px-4 py-3.5 text-xs text-text-secondary max-w-[200px] truncate">
-                        {app.job?.title || '—'}
+                      <td className="px-4 py-3.5 text-xs text-text-secondary max-w-[160px] truncate">
+                        {query.subject || '—'}
                       </td>
-                      <td className="px-4 py-3.5">
-                        <span
-                          className={`inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md border ${STATUS_STYLES[app.status]}`}
-                        >
-                          {app.status}
-                        </span>
+                      <td className="px-4 py-3.5 text-xs text-text-secondary max-w-[220px] truncate">
+                        {query.message}
                       </td>
-                      <td className="px-4 py-3.5 text-xs text-text-secondary">
-                        {formatDate(app.createdAt)}
+                      <td className="px-4 py-3.5 text-xs text-text-secondary whitespace-nowrap">
+                        {formatDate(query.createdAt)}
                       </td>
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
-                            onClick={() => onView(app.id)}
+                            onClick={() => {
+                              setSelected(query);
+                              setIsViewOpen(true);
+                            }}
                             className="cursor-pointer font-semibold text-[11px] py-1.5 px-2.5 border border-brand-border hover:border-brand-border-hover bg-brand-dark/40 hover:bg-brand-hover text-text-secondary hover:text-text-primary rounded-md flex items-center gap-1.5 transition-all"
                           >
                             <Eye size={12} /> View
@@ -362,11 +301,11 @@ export default function JobApplicationList({
                           <button
                             type="button"
                             onClick={() => {
-                              setSelected(app);
+                              setSelected(query);
                               setIsDeleteOpen(true);
                             }}
                             className="cursor-pointer p-1.5 bg-accent-danger/5 hover:bg-accent-danger/10 border border-accent-danger/10 hover:border-accent-danger/25 text-accent-danger rounded-md flex items-center justify-center transition-all"
-                            title="Delete application"
+                            title="Delete query"
                           >
                             <Trash2 size={13} />
                           </button>
@@ -406,15 +345,63 @@ export default function JobApplicationList({
       )}
 
       <Modal
+        isOpen={isViewOpen}
+        onClose={() => setIsViewOpen(false)}
+        title="Query Details"
+      >
+        {selected && (
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <DetailField label="Name" value={selected.name} />
+              <DetailField label="Email" value={selected.email} />
+              <DetailField label="Phone" value={selected.phone || '—'} />
+              <DetailField label="Subject" value={selected.subject || '—'} />
+              <DetailField
+                label="Submitted"
+                value={formatDateTime(selected.createdAt)}
+                className="sm:col-span-2"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">
+                Message
+              </span>
+              <p className="text-xs text-text-secondary leading-relaxed whitespace-pre-wrap bg-brand-dark/40 border border-brand-border rounded-lg p-3">
+                {selected.message}
+              </p>
+            </div>
+            <div className="flex gap-3 pt-1">
+              <a
+                href={`mailto:${selected.email}`}
+                className="flex-1 cursor-pointer font-semibold py-2.5 rounded-lg text-xs bg-accent-primary text-white hover:bg-accent-primary-hover flex items-center justify-center gap-2 transition-all no-underline"
+              >
+                <Mail size={14} /> Reply via Email
+              </a>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsViewOpen(false);
+                  setIsDeleteOpen(true);
+                }}
+                className="cursor-pointer font-semibold py-2.5 px-4 rounded-lg text-xs bg-accent-danger/10 border border-accent-danger/20 text-accent-danger hover:bg-accent-danger/20 transition-all"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
         isOpen={isDeleteOpen}
         onClose={() => !isDeleting && setIsDeleteOpen(false)}
-        title="Delete Application"
+        title="Delete Query"
       >
         <div className="flex flex-col gap-5">
           <p className="text-xs text-text-secondary leading-relaxed">
-            Delete application from{' '}
-            <strong className="text-text-primary">"{selected?.applicantName}"</strong>? The resume
-            file will also be removed if present.
+            Delete query from{' '}
+            <strong className="text-text-primary">"{selected?.name}"</strong>? This cannot be
+            undone.
           </p>
           <div className="flex gap-3">
             <button
@@ -442,6 +429,25 @@ export default function JobApplicationList({
           </div>
         </div>
       </Modal>
+    </div>
+  );
+}
+
+function DetailField({
+  label,
+  value,
+  className = '',
+}: {
+  label: string;
+  value: string;
+  className?: string;
+}) {
+  return (
+    <div className={`flex flex-col gap-1 ${className}`}>
+      <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">
+        {label}
+      </span>
+      <span className="text-xs text-text-primary font-medium break-all">{value}</span>
     </div>
   );
 }
