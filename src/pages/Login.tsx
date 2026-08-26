@@ -33,6 +33,9 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       const loggedInEmail = response.admin?.email || email;
       localStorage.setItem('logixmart_token', response.token);
       localStorage.setItem('logixmart_admin_email', loggedInEmail);
+      if (response.refreshToken) {
+        localStorage.setItem('logixmart_refresh_token', response.refreshToken);
+      }
       onLoginSuccess({
         email: loggedInEmail,
         password,

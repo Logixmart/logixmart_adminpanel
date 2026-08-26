@@ -6,10 +6,12 @@ import { BlogsManagement } from './pages/BlogsManagement';
 import JobsManagement from './pages/Jobs/JobsManagement';
 import JobApplicationsManagement from './pages/JobApplications/JobApplicationsManagement';
 import QueryManagement from './pages/Query/QueryManagement';
+import ClientReviewsManagement from './pages/ClientReviews/ClientReviewsManagement';
 import { logoutAdmin, displayNameFromEmail, type LoginSession } from './api/admin';
 import {
   ADMIN_NAME_STORAGE_KEY,
   ADMIN_ROLE_STORAGE_KEY,
+  clearAuthSession,
   isSuperAdmin,
   roleLabel,
 } from './utils/auth';
@@ -98,12 +100,8 @@ function App() {
       await logoutAdmin();
     } catch (error) {
       console.error('Logout error:', error);
+      clearAuthSession();
     }
-    localStorage.removeItem('logixmart_token');
-    localStorage.removeItem('logixmart_admin_email');
-    localStorage.removeItem('logixmart_admin_last_login');
-    localStorage.removeItem(ADMIN_ROLE_STORAGE_KEY);
-    localStorage.removeItem(ADMIN_NAME_STORAGE_KEY);
     setAdminInfo(emptyAdminInfo);
     setIsAuthenticated(false);
   };
@@ -132,6 +130,8 @@ function App() {
         return <JobApplicationsManagement />;
       case 'query':
         return <QueryManagement />;
+      case 'client-reviews':
+        return <ClientReviewsManagement />;
       default:
         return renderAdminPage();
     }

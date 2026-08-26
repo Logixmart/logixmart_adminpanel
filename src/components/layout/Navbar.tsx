@@ -35,6 +35,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab }) => {
         return 'Job Applications';
       case 'query':
         return 'Query Portal';
+      case 'client-reviews':
+        return 'Client Reviews';
       default:
         return 'Console Gateway';
     }

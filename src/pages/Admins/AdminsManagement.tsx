@@ -272,17 +272,19 @@ export default function AdminsManagement() {
                         >
                           <Pencil size={14} />
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelected(admin);
-                            setIsDeleteOpen(true);
-                          }}
-                          className="p-2 rounded-md border border-accent-danger/20 text-accent-danger hover:bg-accent-danger/10"
-                          title="Delete"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        {admin.role !== 'SUPER_ADMIN' && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelected(admin);
+                              setIsDeleteOpen(true);
+                            }}
+                            className="p-2 rounded-md border border-accent-danger/20 text-accent-danger hover:bg-accent-danger/10"
+                            title="Delete"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

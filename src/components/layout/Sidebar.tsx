@@ -8,6 +8,7 @@ import {
   Briefcase,
   ClipboardList,
   MessageSquare,
+  Star,
 } from 'lucide-react';
 import { CompanyLogo } from '../ui/CompanyLogo';
 
@@ -38,6 +39,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: <ClipboardList size={20} />,
     },
     { id: 'query', label: 'Query', icon: <MessageSquare size={20} /> },
+    {
+      id: 'client-reviews',
+      label: 'Client Reviews',
+      icon: <Star size={20} />,
+    },
   ];
 
   const getInitials = (fullName: string) => {

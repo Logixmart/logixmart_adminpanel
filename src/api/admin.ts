@@ -1,4 +1,10 @@
 import axios from 'axios';
+import {
+  clearAuthSession,
+  getAccessToken,
+  getRefreshToken,
+  setAuthTokens,
+} from '../utils/auth';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -10,7 +16,7 @@ const adminApi = axios.create({
 });
 
 adminApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem('logixmart_token');
+  const token = getAccessToken();
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -30,6 +36,8 @@ export interface LoginResponse {
   success: boolean;
   message?: string;
   token?: string;
+  accessToken?: string;
+  refreshToken?: string;
   admin?: AdminUser;
 }
 
@@ -59,7 +67,10 @@ export interface HealthResponse {
 /**
  * Perform login request to the Logixmart backend.
  */
-export async function loginAdmin(email: string, password: string): Promise<LoginResponse> {
+export async function loginAdmin(
+  email: string,
+  password: string
+): Promise<LoginResponse> {
   try {
     const response = await adminApi.post<LoginResponse>('/login', {
       email,
@@ -77,14 +88,68 @@ export async function loginAdmin(email: string, password: string): Promise<Login
 
     return {
       success: true,
-      token: data.token,
+      token: data.accessToken || data.token,
+      accessToken: data.accessToken || data.token,
+      refreshToken: data.refreshToken,
       admin: data.admin,
       message: data.message,
     };
   } catch {
     return {
       success: false,
-      message: 'Unable to connect to the backend server. Make sure it is running.',
+      message:
+        'Unable to connect to the backend server. Make sure it is running.',
+    };
+  }
+}
+
+/**
+ * Exchange refresh token for a new access + refresh token pair.
+ * POST /api/admin/refresh
+ */
+export async function refreshAdminSession(): Promise<LoginResponse> {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) {
+    return {
+      success: false,
+      message: 'No refresh token available',
+    };
+  }
+
+  try {
+    const response = await axios.post<LoginResponse>(
+      `${API_URL}/api/admin/refresh`,
+      { refreshToken },
+      {
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+
+    const data = response.data;
+    if (!data.success) {
+      return {
+        success: false,
+        message: data.message || 'Failed to refresh session',
+      };
+    }
+
+    const accessToken = data.accessToken || data.token;
+    if (accessToken) {
+      setAuthTokens(accessToken, data.refreshToken);
+    }
+
+    return {
+      success: true,
+      token: accessToken,
+      accessToken,
+      refreshToken: data.refreshToken,
+      admin: data.admin,
+      message: data.message,
+    };
+  } catch {
+    return {
+      success: false,
+      message: 'Unable to refresh session. Please log in again.',
     };
   }
 }
@@ -125,7 +190,10 @@ export async function checkServerHealth(): Promise<HealthResponse> {
  */
 export async function logoutAdmin(): Promise<LoginResponse> {
   try {
-    const response = await adminApi.post<LoginResponse>('/logout');
+    const refreshToken = getRefreshToken();
+    const response = await adminApi.post<LoginResponse>('/logout', {
+      refreshToken: refreshToken || undefined,
+    });
     const data = response.data;
 
     if (!data.success) {
@@ -144,5 +212,7 @@ export async function logoutAdmin(): Promise<LoginResponse> {
       success: false,
       message: 'Unable to connect to the backend server.',
     };
+  } finally {
+    clearAuthSession();
   }
 }
