@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getAccessToken } from '../utils/auth';
+import { attachAuthInterceptors } from './authInterceptor';
 
 export interface ClientReview {
   id: string;
@@ -53,13 +53,7 @@ const clientReviewsApi = axios.create({
   },
 });
 
-clientReviewsApi.interceptors.request.use((config) => {
-  const token = getAccessToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+attachAuthInterceptors(clientReviewsApi);
 
 export async function getClientReviews(params?: {
   page?: number;

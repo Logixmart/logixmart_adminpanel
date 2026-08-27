@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { attachAuthInterceptors } from './authInterceptor';
 
 export interface JobPost {
   id: string;
@@ -51,15 +52,7 @@ const jobPostApi = axios.create({
   },
 });
 
-jobPostApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem('logixmart_token');
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
-});
+attachAuthInterceptors(jobPostApi);
 
 /**
  * Create Job

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { attachAuthInterceptors } from './authInterceptor';
 
 export interface ContactSubmission {
   id: string;
@@ -32,13 +33,7 @@ const contactApi = axios.create({
   },
 });
 
-contactApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem('logixmart_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+attachAuthInterceptors(contactApi);
 
 export async function getContactSubmissions(params?: {
   page?: number;

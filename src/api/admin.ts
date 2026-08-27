@@ -1,9 +1,11 @@
 import axios from 'axios';
 import {
+  attachAuthInterceptors,
+  refreshAccessToken,
+} from './authInterceptor';
+import {
   clearAuthSession,
-  getAccessToken,
   getRefreshToken,
-  setAuthTokens,
 } from '../utils/auth';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -15,15 +17,7 @@ const adminApi = axios.create({
   },
 });
 
-adminApi.interceptors.request.use((config) => {
-  const token = getAccessToken();
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
-});
+attachAuthInterceptors(adminApi);
 
 export interface AdminUser {
   id?: string;
@@ -108,8 +102,7 @@ export async function loginAdmin(
  * POST /api/admin/refresh
  */
 export async function refreshAdminSession(): Promise<LoginResponse> {
-  const refreshToken = getRefreshToken();
-  if (!refreshToken) {
+  if (!getRefreshToken()) {
     return {
       success: false,
       message: 'No refresh token available',
@@ -117,34 +110,12 @@ export async function refreshAdminSession(): Promise<LoginResponse> {
   }
 
   try {
-    const response = await axios.post<LoginResponse>(
-      `${API_URL}/api/admin/refresh`,
-      { refreshToken },
-      {
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
-
-    const data = response.data;
-    if (!data.success) {
-      return {
-        success: false,
-        message: data.message || 'Failed to refresh session',
-      };
-    }
-
-    const accessToken = data.accessToken || data.token;
-    if (accessToken) {
-      setAuthTokens(accessToken, data.refreshToken);
-    }
-
+    const accessToken = await refreshAccessToken();
     return {
       success: true,
       token: accessToken,
       accessToken,
-      refreshToken: data.refreshToken,
-      admin: data.admin,
-      message: data.message,
+      message: 'Token refreshed successfully',
     };
   } catch {
     return {

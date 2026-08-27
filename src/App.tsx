@@ -9,9 +9,15 @@ import QueryManagement from './pages/Query/QueryManagement';
 import ClientReviewsManagement from './pages/ClientReviews/ClientReviewsManagement';
 import { logoutAdmin, displayNameFromEmail, type LoginSession } from './api/admin';
 import {
+  ensureValidSession,
+  setSessionExpiredHandler,
+} from './api/authInterceptor';
+import {
   ADMIN_NAME_STORAGE_KEY,
   ADMIN_ROLE_STORAGE_KEY,
   clearAuthSession,
+  getAccessToken,
+  getRefreshToken,
   isSuperAdmin,
   roleLabel,
 } from './utils/auth';
@@ -47,12 +53,31 @@ function App() {
   const [adminInfo, setAdminInfo] = useState(emptyAdminInfo);
 
   useEffect(() => {
-    const token = localStorage.getItem('logixmart_token');
-    const email = localStorage.getItem('logixmart_admin_email') || '';
-    const lastLogin = localStorage.getItem('logixmart_admin_last_login') || '';
-    const role = localStorage.getItem(ADMIN_ROLE_STORAGE_KEY) || '';
-    const storedName = localStorage.getItem(ADMIN_NAME_STORAGE_KEY) || '';
-    if (token && email) {
+    setSessionExpiredHandler(() => {
+      setAdminInfo(emptyAdminInfo);
+      setIsAuthenticated(false);
+    });
+
+    const restoreSession = async () => {
+      const email = localStorage.getItem('logixmart_admin_email') || '';
+      const lastLogin = localStorage.getItem('logixmart_admin_last_login') || '';
+      const role = localStorage.getItem(ADMIN_ROLE_STORAGE_KEY) || '';
+      const storedName = localStorage.getItem(ADMIN_NAME_STORAGE_KEY) || '';
+      const hasRefreshToken = Boolean(getRefreshToken());
+      const hasAccessToken = Boolean(getAccessToken());
+
+      if (!email || (!hasAccessToken && !hasRefreshToken)) {
+        return;
+      }
+
+      if (hasRefreshToken) {
+        const valid = await ensureValidSession();
+        if (!valid) {
+          clearAuthSession();
+          return;
+        }
+      }
+
       setIsAuthenticated(true);
       setAdminInfo({
         ...emptyAdminInfo,
@@ -61,7 +86,9 @@ function App() {
         role,
         lastLogin,
       });
-    }
+    };
+
+    restoreSession();
   }, []);
 
   const handleUpdateAdmin = (updatedInfo: Partial<typeof adminInfo>) => {

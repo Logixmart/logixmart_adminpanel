@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { attachAuthInterceptors } from './authInterceptor';
 
 export type AdminRole = 'SUPER_ADMIN' | 'ADMIN';
 
@@ -33,13 +34,7 @@ const adminsApi = axios.create({
   },
 });
 
-adminsApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem('logixmart_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+attachAuthInterceptors(adminsApi);
 
 export async function listAdmins(): Promise<ManagedAdmin[]> {
   const response = await adminsApi.get<AdminListResponse>('/');

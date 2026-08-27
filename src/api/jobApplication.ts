@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { attachAuthInterceptors } from './authInterceptor';
 
 export type JobApplicationStatus =
   | 'PENDING'
@@ -51,13 +52,7 @@ const jobApplicationApi = axios.create({
   },
 });
 
-jobApplicationApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem('logixmart_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+attachAuthInterceptors(jobApplicationApi);
 
 export async function getJobApplications(params?: {
   page?: number;

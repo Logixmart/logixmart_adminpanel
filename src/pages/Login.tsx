@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { loginAdmin, type LoginSession } from '../api/admin';
+import { setAuthTokens } from '../utils/auth';
 import { CompanyLogo } from '../components/ui/CompanyLogo';
 
 interface LoginProps {
@@ -31,11 +32,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
 
     if (response.success && response.token) {
       const loggedInEmail = response.admin?.email || email;
-      localStorage.setItem('logixmart_token', response.token);
+      setAuthTokens(response.token, response.refreshToken);
       localStorage.setItem('logixmart_admin_email', loggedInEmail);
-      if (response.refreshToken) {
-        localStorage.setItem('logixmart_refresh_token', response.refreshToken);
-      }
       onLoginSuccess({
         email: loggedInEmail,
         password,

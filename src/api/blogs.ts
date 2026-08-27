@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { attachAuthInterceptors } from './authInterceptor';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -6,22 +7,7 @@ const blogsApi = axios.create({
   baseURL: `${API_URL}/api/blogs`,
 });
 
-blogsApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem('logixmart_token');
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  // Let the browser set multipart boundary when sending FormData
-  if (config.data instanceof FormData) {
-    delete config.headers['Content-Type'];
-  } else if (!config.headers['Content-Type']) {
-    config.headers['Content-Type'] = 'application/json';
-  }
-
-  return config;
-});
+attachAuthInterceptors(blogsApi);
 
 export interface Blog {
   id: string;
