@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
-import { AlertCircle, ArrowLeft, ExternalLink, FileText, Loader2 } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Download, FileText, Loader2 } from 'lucide-react';
 import {
+  downloadJobApplicationResume,
   getJobApplicationById,
-  resolveResumeUrl,
   updateJobApplicationStatus,
   type JobApplication,
   type JobApplicationStatus,
 } from '../../api/jobApplication';
+import { axiosMessage } from '../../api/http';
+import { triggerBlobDownload } from '../../utils/auth';
 
 const STATUS_OPTIONS: { value: JobApplicationStatus; label: string }[] = [
   { value: 'PENDING', label: 'Pending' },
@@ -30,6 +32,7 @@ export default function JobApplicationDetails({
   const [status, setStatus] = useState<JobApplicationStatus>('PENDING');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [downloadingResume, setDownloadingResume] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -45,8 +48,7 @@ export default function JobApplicationDetails({
       setApplication(data);
       setStatus(data.status);
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } };
-      setError(axiosErr.response?.data?.message || 'Failed to load application details.');
+      setError(axiosMessage(err, 'Failed to load application details.'));
     } finally {
       setLoading(false);
     }
@@ -63,14 +65,43 @@ export default function JobApplicationDetails({
       setSuccess('Application status updated successfully.');
       setTimeout(() => setSuccess(null), 4000);
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } };
-      setError(axiosErr.response?.data?.message || 'Failed to update status.');
+      setError(axiosMessage(err, 'Failed to update status.'));
     } finally {
       setSaving(false);
     }
   };
 
-  const resumeHref = resolveResumeUrl(application?.resumeUrl);
+  const handleDownloadResume = async () => {
+    if (!application?.resumeUrl) return;
+    setDownloadingResume(true);
+    setError(null);
+    try {
+      const { blob, filename } = await downloadJobApplicationResume(
+        application.id
+      );
+      if (blob.type.includes('pdf')) {
+        const url = URL.createObjectURL(blob);
+        const tab = window.open(url, '_blank', 'noopener');
+        if (!tab) {
+          triggerBlobDownload(blob, filename);
+        }
+        window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      } else {
+        triggerBlobDownload(blob, filename);
+      }
+    } catch (err: unknown) {
+      setError(
+        axiosMessage(
+          err,
+          err instanceof Error ? err.message : 'Failed to download resume.'
+        )
+      );
+    } finally {
+      setDownloadingResume(false);
+    }
+  };
+
+  const hasResume = Boolean(application?.resumeUrl);
 
   if (loading) {
     return (
@@ -169,15 +200,23 @@ export default function JobApplicationDetails({
           value={application.linkedinUrl || '—'}
           href={application.linkedinUrl || undefined}
         />
-        {resumeHref ? (
-          <a
-            href={resumeHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="self-start mt-1 cursor-pointer font-semibold text-[11px] py-2 px-3 rounded-md bg-accent-primary text-white flex items-center gap-1.5 no-underline"
+        {hasResume ? (
+          <button
+            type="button"
+            onClick={handleDownloadResume}
+            disabled={downloadingResume}
+            className="self-start mt-1 cursor-pointer font-semibold text-[11px] py-2 px-3 rounded-md bg-accent-primary text-white border-none flex items-center gap-1.5 disabled:opacity-50"
           >
-            <FileText size={13} /> View Resume <ExternalLink size={12} />
-          </a>
+            {downloadingResume ? (
+              <>
+                <Loader2 className="animate-spin" size={13} /> Opening...
+              </>
+            ) : (
+              <>
+                <FileText size={13} /> View Resume <Download size={12} />
+              </>
+            )}
+          </button>
         ) : (
           <p className="text-xs text-text-muted">No resume uploaded.</p>
         )}

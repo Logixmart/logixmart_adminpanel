@@ -1,5 +1,4 @@
-import axios from 'axios';
-import { attachAuthInterceptors } from './authInterceptor';
+import { createApiClient, parseExportBlob } from './http';
 
 export interface ContactSubmission {
   id: string;
@@ -24,16 +23,7 @@ export interface ContactListResponse {
   message?: string;
 }
 
-const API_URL = import.meta.env.VITE_API_URL;
-
-const contactApi = axios.create({
-  baseURL: `${API_URL}/api/contact`,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-attachAuthInterceptors(contactApi);
+const contactApi = createApiClient('/api/contact');
 
 export async function getContactSubmissions(params?: {
   page?: number;
@@ -67,17 +57,5 @@ export async function exportContactSubmissions(params?: {
     },
   });
 
-  const blob = response.data as Blob;
-  if (blob.type && blob.type.includes('application/json')) {
-    const text = await blob.text();
-    let message = 'Export failed';
-    try {
-      message = JSON.parse(text).message || message;
-    } catch {
-      // ignore parse errors
-    }
-    throw new Error(message);
-  }
-
-  return blob;
+  return parseExportBlob(response.data as Blob);
 }

@@ -19,18 +19,8 @@ import {
   type ManagedAdmin,
 } from '../../api/admins';
 import { roleLabel } from '../../utils/auth';
-
-function formatDate(value: string) {
-  try {
-    return new Date(value).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  } catch {
-    return value;
-  }
-}
+import { formatDate } from '../../utils/format';
+import { axiosMessage } from '../../api/http';
 
 const emptyForm = {
   name: '',
@@ -61,12 +51,8 @@ export default function AdminsManagement() {
       const data = await listAdmins();
       setAdmins(data);
     } catch (err: unknown) {
-      const axiosErr = err as {
-        response?: { data?: { message?: string } };
-      };
       setError(
-        axiosErr.response?.data?.message ||
-          'Failed to load admins. Super admin access required.'
+        axiosMessage(err, 'Failed to load admins. Super admin access required.')
       );
       setAdmins([]);
     } finally {
@@ -140,14 +126,11 @@ export default function AdminsManagement() {
       setIsFormOpen(false);
       loadAdmins();
     } catch (err: unknown) {
-      const axiosErr = err as {
-        response?: { data?: { message?: string } };
-        message?: string;
-      };
       setFormError(
-        axiosErr.response?.data?.message ||
-          axiosErr.message ||
-          'Failed to save admin.'
+        axiosMessage(
+          err,
+          err instanceof Error ? err.message : 'Failed to save admin.'
+        )
       );
     } finally {
       setSaving(false);
@@ -164,10 +147,7 @@ export default function AdminsManagement() {
       showSuccess('Admin deleted successfully.');
       loadAdmins();
     } catch (err: unknown) {
-      const axiosErr = err as {
-        response?: { data?: { message?: string } };
-      };
-      setError(axiosErr.response?.data?.message || 'Failed to delete admin.');
+      setError(axiosMessage(err, 'Failed to delete admin.'));
       setIsDeleteOpen(false);
     } finally {
       setDeleting(false);

@@ -1,5 +1,4 @@
-import axios from 'axios';
-import { attachAuthInterceptors } from './authInterceptor';
+import { createApiClient, parseExportBlob, resolveMediaUrl } from './http';
 
 export type JobApplicationStatus =
   | 'PENDING'
@@ -43,16 +42,7 @@ export interface JobApplicationListResponse {
   message?: string;
 }
 
-const API_URL = import.meta.env.VITE_API_URL;
-
-const jobApplicationApi = axios.create({
-  baseURL: `${API_URL}/api/job-applications`,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-attachAuthInterceptors(jobApplicationApi);
+const jobApplicationApi = createApiClient('/api/job-applications');
 
 export async function getJobApplications(params?: {
   page?: number;
@@ -61,14 +51,20 @@ export async function getJobApplications(params?: {
   status?: JobApplicationStatus | '';
   jobId?: string;
 }): Promise<JobApplicationListResponse> {
-  const response = await jobApplicationApi.get<JobApplicationListResponse>('/', { params });
+  const response = await jobApplicationApi.get<JobApplicationListResponse>(
+    '/',
+    { params }
+  );
   return response.data;
 }
 
-export async function getJobApplicationById(id: string): Promise<JobApplication> {
-  const response = await jobApplicationApi.get<{ success: boolean; data: JobApplication }>(
-    `/${id}`
-  );
+export async function getJobApplicationById(
+  id: string
+): Promise<JobApplication> {
+  const response = await jobApplicationApi.get<{
+    success: boolean;
+    data: JobApplication;
+  }>(`/${id}`);
   return response.data.data;
 }
 
@@ -114,28 +110,51 @@ export async function exportJobApplications(params?: {
     },
   });
 
-  const blob = response.data as Blob;
-  if (blob.type && blob.type.includes('application/json')) {
-    const text = await blob.text();
-    let message = 'Export failed';
-    try {
-      message = JSON.parse(text).message || message;
-    } catch {
-      // ignore parse errors
-    }
-    throw new Error(message);
-  }
-
-  return blob;
+  return parseExportBlob(response.data as Blob);
 }
 
-export function resolveResumeUrl(resumeUrl: string | null | undefined): string | null {
-  if (!resumeUrl) {
-    return null;
+function filenameFromDisposition(header?: string): string | null {
+  if (!header) return null;
+  const match = header.match(/filename\*?=(?:UTF-8''|"?)([^";]+)/i);
+  if (!match?.[1]) return null;
+  try {
+    return decodeURIComponent(match[1].replace(/"/g, '').trim());
+  } catch {
+    return match[1].replace(/"/g, '').trim();
   }
-  if (resumeUrl.startsWith('http://') || resumeUrl.startsWith('https://')) {
-    return resumeUrl;
+}
+
+export async function downloadJobApplicationResume(
+  id: string
+): Promise<{ blob: Blob; filename: string }> {
+  try {
+    const response = await jobApplicationApi.get(`/${id}/resume`, {
+      responseType: 'blob',
+    });
+    const blob = await parseExportBlob(response.data as Blob);
+    const filename =
+      filenameFromDisposition(
+        response.headers['content-disposition'] as string | undefined
+      ) || 'resume';
+    return { blob, filename };
+  } catch (err: unknown) {
+    const data = (err as { response?: { data?: unknown } }).response?.data;
+    if (data instanceof Blob) {
+      try {
+        const parsed = JSON.parse(await data.text()) as { message?: string };
+        throw new Error(parsed.message || 'Failed to download resume.');
+      } catch (inner) {
+        if (!(inner instanceof SyntaxError)) {
+          throw inner;
+        }
+      }
+    }
+    throw err;
   }
-  const origin = String(API_URL || '').replace(/\/api\/?$/, '');
-  return `${origin}${resumeUrl.startsWith('/') ? resumeUrl : `/${resumeUrl}`}`;
+}
+
+export function resolveResumeUrl(
+  resumeUrl: string | null | undefined
+): string | null {
+  return resolveMediaUrl(resumeUrl) || null;
 }

@@ -1,5 +1,4 @@
-import axios from 'axios';
-import { attachAuthInterceptors } from './authInterceptor';
+import { createApiClient, wrapAction, wrapGet } from './http';
 
 export interface ClientReview {
   id: string;
@@ -44,139 +43,61 @@ export interface ClientReviewPayload {
   designation?: string;
 }
 
-const API_URL = import.meta.env.VITE_API_URL;
-
-const clientReviewsApi = axios.create({
-  baseURL: `${API_URL}/api/client-reviews`,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-attachAuthInterceptors(clientReviewsApi);
+const clientReviewsApi = createApiClient('/api/client-reviews');
 
 export async function getClientReviews(params?: {
   page?: number;
   limit?: number;
   search?: string;
 }): Promise<ClientReviewsListResponse> {
-  try {
-    const response = await clientReviewsApi.get<ClientReviewsListResponse>('/', {
-      params,
-    });
-    return response.data;
-  } catch {
-    return {
-      success: false,
-      message:
-        'Unable to connect to the backend server. Make sure it is running.',
-      data: [],
-    };
-  }
+  return wrapGet(
+    () =>
+      clientReviewsApi.get<ClientReviewsListResponse>('/', {
+        params,
+      }),
+    'Unable to connect to the backend server. Make sure it is running.',
+    { success: false, data: [] }
+  );
 }
 
 export async function getClientReviewById(
   id: string
 ): Promise<ClientReviewResponse> {
-  try {
-    const response = await clientReviewsApi.get<ClientReviewResponse>(`/${id}`);
-    return response.data;
-  } catch {
-    return {
-      success: false,
-      message: 'Failed to retrieve client review details.',
-    };
-  }
+  return wrapGet(
+    () => clientReviewsApi.get<ClientReviewResponse>(`/${id}`),
+    'Failed to retrieve client review details.',
+    { success: false }
+  );
 }
 
 export async function createClientReview(
   payload: ClientReviewPayload
 ): Promise<ClientReviewActionResponse> {
-  try {
-    const response = await clientReviewsApi.post<ClientReviewActionResponse>(
-      '/',
-      payload
-    );
-    const data = response.data;
-
-    if (!data.success) {
-      return {
-        success: false,
-        message: data.message || 'Failed to create client review.',
-      };
-    }
-
-    return data;
-  } catch (err: unknown) {
-    const axiosErr = err as {
-      response?: { data?: { message?: string } };
-    };
-    return {
-      success: false,
-      message:
-        axiosErr.response?.data?.message ||
-        'Network error occurred while creating client review.',
-    };
-  }
+  return wrapAction(
+    () => clientReviewsApi.post<ClientReviewActionResponse>('/', payload),
+    'Failed to create client review.',
+    'Network error occurred while creating client review.'
+  );
 }
 
 export async function updateClientReview(
   id: string,
   payload: Partial<ClientReviewPayload>
 ): Promise<ClientReviewActionResponse> {
-  try {
-    const response = await clientReviewsApi.patch<ClientReviewActionResponse>(
-      `/${id}`,
-      payload
-    );
-    const data = response.data;
-
-    if (!data.success) {
-      return {
-        success: false,
-        message: data.message || 'Failed to update client review.',
-      };
-    }
-
-    return data;
-  } catch (err: unknown) {
-    const axiosErr = err as {
-      response?: { data?: { message?: string } };
-    };
-    return {
-      success: false,
-      message:
-        axiosErr.response?.data?.message ||
-        'Network error occurred while updating client review.',
-    };
-  }
+  return wrapAction(
+    () =>
+      clientReviewsApi.patch<ClientReviewActionResponse>(`/${id}`, payload),
+    'Failed to update client review.',
+    'Network error occurred while updating client review.'
+  );
 }
 
 export async function deleteClientReview(
   id: string
 ): Promise<ClientReviewActionResponse> {
-  try {
-    const response =
-      await clientReviewsApi.delete<ClientReviewActionResponse>(`/${id}`);
-    const data = response.data;
-
-    if (!data.success) {
-      return {
-        success: false,
-        message: data.message || 'Failed to delete client review.',
-      };
-    }
-
-    return data;
-  } catch (err: unknown) {
-    const axiosErr = err as {
-      response?: { data?: { message?: string } };
-    };
-    return {
-      success: false,
-      message:
-        axiosErr.response?.data?.message ||
-        'Network error occurred while deleting client review.',
-    };
-  }
+  return wrapAction(
+    () => clientReviewsApi.delete<ClientReviewActionResponse>(`/${id}`),
+    'Failed to delete client review.',
+    'Network error occurred while deleting client review.'
+  );
 }

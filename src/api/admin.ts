@@ -1,23 +1,10 @@
 import axios from 'axios';
-import {
-  attachAuthInterceptors,
-  refreshAccessToken,
-} from './authInterceptor';
-import {
-  clearAuthSession,
-  getRefreshToken,
-} from '../utils/auth';
+import { createApiClient, axiosMessage } from './http';
+import { refreshAccessToken } from './authInterceptor';
+import { clearAuthSession, getRefreshToken } from '../utils/auth';
 
 const API_URL = import.meta.env.VITE_API_URL;
-
-const adminApi = axios.create({
-  baseURL: `${API_URL}/api/admin`,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-attachAuthInterceptors(adminApi);
+const adminApi = createApiClient('/api/admin');
 
 export interface AdminUser {
   id?: string;
@@ -88,11 +75,13 @@ export async function loginAdmin(
       admin: data.admin,
       message: data.message,
     };
-  } catch {
+  } catch (err: unknown) {
     return {
       success: false,
-      message:
-        'Unable to connect to the backend server. Make sure it is running.',
+      message: axiosMessage(
+        err,
+        'Unable to connect to the backend server. Make sure it is running.'
+      ),
     };
   }
 }

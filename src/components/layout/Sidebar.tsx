@@ -44,6 +44,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Client Reviews',
       icon: <Star size={20} />,
     },
+    { id: 'our-work', label: 'Our Work', icon: <Briefcase size={20} /> },
   ];
 
   const getInitials = (fullName: string) => {
@@ -149,7 +150,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         </div>
 
-        {collapsed && !collapsed && (
+        {collapsed && (
           <button
             onClick={() => setCollapsed(!collapsed)}
             className="bg-transparent border-none text-text-muted cursor-pointer flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 hover:bg-brand-border hover:text-text-primary"

@@ -6,6 +6,7 @@ import { BlogsManagement } from './pages/BlogsManagement';
 import JobsManagement from './pages/Jobs/JobsManagement';
 import JobApplicationsManagement from './pages/JobApplications/JobApplicationsManagement';
 import QueryManagement from './pages/Query/QueryManagement';
+import WorkManagement from './pages/Ourwork/WorkManagement';
 import ClientReviewsManagement from './pages/ClientReviews/ClientReviewsManagement';
 import { logoutAdmin, displayNameFromEmail, type LoginSession } from './api/admin';
 import {
@@ -159,6 +160,8 @@ function App() {
         return <QueryManagement />;
       case 'client-reviews':
         return <ClientReviewsManagement />;
+      case 'our-work':
+        return <WorkManagement />;
       default:
         return renderAdminPage();
     }

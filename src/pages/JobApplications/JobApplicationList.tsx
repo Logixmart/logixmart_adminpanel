@@ -24,6 +24,8 @@ import {
   isSuperAdmin,
   triggerBlobDownload,
 } from '../../utils/auth';
+import { formatDate } from '../../utils/format';
+import { axiosMessage } from '../../api/http';
 
 const STATUS_OPTIONS: JobApplicationStatus[] = [
   'PENDING',
@@ -46,18 +48,6 @@ const STATUS_STYLES: Record<JobApplicationStatus, string> = {
 export interface JobApplicationListProps {
   onView: (id: string) => void;
   refreshKey?: number;
-}
-
-function formatDate(value: string) {
-  try {
-    return new Date(value).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  } catch {
-    return value;
-  }
 }
 
 export default function JobApplicationList({
@@ -117,11 +107,12 @@ export default function JobApplicationList({
       setTotal(response.pagination?.total ?? 0);
       setTotalPages(response.pagination?.totalPages ?? 1);
     } catch (err: unknown) {
-      const axiosErr = err as {
-        response?: { data?: { message?: string }; status?: number };
-      };
-      const apiMessage = axiosErr.response?.data?.message;
-      setError(apiMessage || 'Failed to load applications. Make sure the backend is running.');
+      setError(
+        axiosMessage(
+          err,
+          'Failed to load applications. Make sure the backend is running.'
+        )
+      );
       setApplications([]);
     } finally {
       setLoading(false);

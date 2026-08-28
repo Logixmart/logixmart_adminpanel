@@ -1,5 +1,4 @@
-import axios from 'axios';
-import { attachAuthInterceptors } from './authInterceptor';
+import { createApiClient } from './http';
 
 export type AdminRole = 'SUPER_ADMIN' | 'ADMIN';
 
@@ -25,16 +24,7 @@ export interface AdminMutationResponse {
   data?: ManagedAdmin;
 }
 
-const API_URL = import.meta.env.VITE_API_URL;
-
-const adminsApi = axios.create({
-  baseURL: `${API_URL}/api/admin/users`,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-attachAuthInterceptors(adminsApi);
+const adminsApi = createApiClient('/api/admin/users');
 
 export async function listAdmins(): Promise<ManagedAdmin[]> {
   const response = await adminsApi.get<AdminListResponse>('/');

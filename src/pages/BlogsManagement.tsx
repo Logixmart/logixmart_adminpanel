@@ -14,6 +14,7 @@ import {
   X
 } from 'lucide-react';
 import { Modal } from '../components/ui/Modal';
+import { ImageViewer } from '../components/ui/ImageViewer';
 import type { Blog } from '../api/blogs';
 import { 
   getAllBlogs, 
@@ -21,14 +22,9 @@ import {
   updateBlog, 
   deleteBlog 
 } from '../api/blogs';
-
-function resolveBlogImageUrl(imageUrl: string): string {
-  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-    return imageUrl;
-  }
-  const origin = import.meta.env.VITE_API_URL as string;
-  return `${origin}${imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`}`;
-}
+import { resolveMediaUrl } from '../api/http';
+import { formatDate } from '../utils/format';
+import { FIELD_INPUT_CLASS, FIELD_LABEL_CLASS } from '../utils/styles';
 
 export const BlogsManagement: React.FC = () => {
   const [blogs, setBlogs] = useState<Blog[]>([]);
@@ -57,6 +53,9 @@ export const BlogsManagement: React.FC = () => {
 
   // Action status banner
   const [successBanner, setSuccessBanner] = useState<string | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerImage, setViewerImage] = useState('');
+  const [viewerTitle, setViewerTitle] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -101,7 +100,7 @@ export const BlogsManagement: React.FC = () => {
     setTitle(blog.title);
     setDescription(blog.description);
     setImageFile(null);
-    setImagePreview(blog.imageUrl ? resolveBlogImageUrl(blog.imageUrl) : null);
+    setImagePreview(blog.imageUrl ? resolveMediaUrl(blog.imageUrl) : null);
     setFormError(null);
     setIsFormModalOpen(true);
   };
@@ -254,19 +253,6 @@ export const BlogsManagement: React.FC = () => {
     }
     return 0;
   });
-
-  const formatDate = (dateStr: string) => {
-    try {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      });
-    } catch {
-      return dateStr;
-    }
-  };
 
   return (
     <div className="flex-1 flex flex-col gap-6 animate-fade-in">
@@ -424,7 +410,7 @@ export const BlogsManagement: React.FC = () => {
         /* Blog Grid List */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {sortedBlogs.map((blog) => {
-            const fullImageUrl = blog.imageUrl ? resolveBlogImageUrl(blog.imageUrl) : null;
+            const fullImageUrl = blog.imageUrl ? resolveMediaUrl(blog.imageUrl) : null;
             return (
               <div 
                 key={blog.id} 
@@ -433,20 +419,31 @@ export const BlogsManagement: React.FC = () => {
                 {/* Blog Image Header */}
                 <div className="h-44 w-full bg-brand-dark relative overflow-hidden border-b border-brand-border">
                   {fullImageUrl ? (
-                    <img 
-                      src={fullImageUrl} 
-                      alt={blog.title} 
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format&fit=crop';
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setViewerImage(fullImageUrl);
+                        setViewerTitle(blog.title);
+                        setViewerOpen(true);
                       }}
-                    />
+                      className="w-full h-full p-0 border-none bg-transparent cursor-pointer block"
+                      title="View image"
+                    >
+                      <img 
+                        src={fullImageUrl} 
+                        alt={blog.title} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format&fit=crop';
+                        }}
+                      />
+                    </button>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-text-muted">
                       <ImageIcon size={32} />
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-brand-dark via-transparent to-transparent opacity-60" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-brand-dark via-transparent to-transparent opacity-60 pointer-events-none" />
                   
                   {/* Category / Date Badge */}
                   <span className="absolute bottom-3 left-4 text-[10px] font-semibold bg-brand-dark/80 backdrop-blur border border-brand-border py-1 px-2.5 rounded-md text-text-primary flex items-center gap-1.5 shadow-sm">
@@ -504,35 +501,35 @@ export const BlogsManagement: React.FC = () => {
 
           {/* Title field */}
           <div className="flex flex-col gap-1.5 relative">
-            <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Article Title</label>
+            <label className={FIELD_LABEL_CLASS}>Article Title</label>
             <input
               type="text"
               placeholder="e.g., Implementing Secure Web Sockets in Production"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               disabled={isSubmitting}
-              className="w-full py-2.5 px-4 bg-brand-dark/60 border border-brand-border rounded-md text-text-primary outline-none text-xs transition-all duration-200 focus:border-accent-primary focus:bg-brand-dark/90 focus:ring-2 focus:ring-accent-primary-glow disabled:opacity-50"
+              className={FIELD_INPUT_CLASS}
               required
             />
           </div>
 
           {/* Description field */}
           <div className="flex flex-col gap-1.5 relative">
-            <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Description / Body Content</label>
+            <label className={FIELD_LABEL_CLASS}>Description / Body Content</label>
             <textarea
               placeholder="Describe the main focus and takeaways of this article..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               disabled={isSubmitting}
               rows={4}
-              className="w-full py-2.5 px-4 bg-brand-dark/60 border border-brand-border rounded-md text-text-primary outline-none text-xs transition-all duration-200 focus:border-accent-primary focus:bg-brand-dark/90 focus:ring-2 focus:ring-accent-primary-glow disabled:opacity-50 resize-none"
+              className={`${FIELD_INPUT_CLASS} resize-none`}
               required
             />
           </div>
 
           {/* Image Upload field */}
           <div className="flex flex-col gap-1.5 relative">
-            <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Featured Image (optional)</label>
+            <label className={FIELD_LABEL_CLASS}>Featured Image (optional)</label>
             
             {imagePreview ? (
               /* Image Preview Area */
@@ -661,6 +658,13 @@ export const BlogsManagement: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      <ImageViewer
+        isOpen={viewerOpen}
+        onClose={() => setViewerOpen(false)}
+        images={viewerImage ? [viewerImage] : []}
+        title={viewerTitle}
+      />
     </div>
   );
 };

@@ -55,12 +55,10 @@ export default function JobList({ onCreate, onEdit, refreshKey = 0 }: JobListPro
       });
       setJobs(response.data || []);
     } catch (err: unknown) {
-      const axiosErr = err as {
-        response?: { data?: { message?: string }; status?: number };
-        message?: string;
-      };
-      const apiMessage = axiosErr.response?.data?.message;
-      const status = axiosErr.response?.status;
+      const status = (err as { response?: { status?: number } }).response
+        ?.status;
+      const apiMessage = (err as { response?: { data?: { message?: string } } })
+        .response?.data?.message;
       setError(
         apiMessage
           ? `${apiMessage}${status ? ` (${status})` : ''}`

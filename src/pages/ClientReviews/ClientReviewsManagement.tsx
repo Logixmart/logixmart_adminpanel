@@ -22,6 +22,8 @@ import {
   getClientReviews,
   updateClientReview,
 } from '../../api/clientReviews';
+import { formatDate } from '../../utils/format';
+import { FIELD_INPUT_CLASS, FIELD_LABEL_CLASS } from '../../utils/styles';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -32,18 +34,6 @@ const emptyForm = {
   designation: '',
   message: '',
 };
-
-function formatDate(dateStr: string) {
-  try {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  } catch {
-    return dateStr;
-  }
-}
 
 export const ClientReviewsManagement: React.FC = () => {
   const [reviews, setReviews] = useState<ClientReview[]>([]);
@@ -437,7 +427,7 @@ export const ClientReviewsManagement: React.FC = () => {
           )}
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">
+            <label className={FIELD_LABEL_CLASS}>
               Client Name
             </label>
             <input
@@ -448,14 +438,14 @@ export const ClientReviewsManagement: React.FC = () => {
                 setForm((prev) => ({ ...prev, clientName: e.target.value }))
               }
               disabled={isSubmitting}
-              className="w-full py-2.5 px-4 bg-brand-dark/60 border border-brand-border rounded-md text-text-primary outline-none text-xs transition-all duration-200 focus:border-accent-primary focus:bg-brand-dark/90 focus:ring-2 focus:ring-accent-primary-glow disabled:opacity-50"
+              className={FIELD_INPUT_CLASS}
               required
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">
+              <label className={FIELD_LABEL_CLASS}>
                 Company (optional)
               </label>
               <input
@@ -466,12 +456,12 @@ export const ClientReviewsManagement: React.FC = () => {
                   setForm((prev) => ({ ...prev, companyName: e.target.value }))
                 }
                 disabled={isSubmitting}
-                className="w-full py-2.5 px-4 bg-brand-dark/60 border border-brand-border rounded-md text-text-primary outline-none text-xs transition-all duration-200 focus:border-accent-primary focus:bg-brand-dark/90 focus:ring-2 focus:ring-accent-primary-glow disabled:opacity-50"
+                className={FIELD_INPUT_CLASS}
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">
+              <label className={FIELD_LABEL_CLASS}>
                 Designation (optional)
               </label>
               <input
@@ -482,13 +472,13 @@ export const ClientReviewsManagement: React.FC = () => {
                   setForm((prev) => ({ ...prev, designation: e.target.value }))
                 }
                 disabled={isSubmitting}
-                className="w-full py-2.5 px-4 bg-brand-dark/60 border border-brand-border rounded-md text-text-primary outline-none text-xs transition-all duration-200 focus:border-accent-primary focus:bg-brand-dark/90 focus:ring-2 focus:ring-accent-primary-glow disabled:opacity-50"
+                className={FIELD_INPUT_CLASS}
               />
             </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">
+            <label className={FIELD_LABEL_CLASS}>
               Email
             </label>
             <input
@@ -499,13 +489,13 @@ export const ClientReviewsManagement: React.FC = () => {
                 setForm((prev) => ({ ...prev, email: e.target.value }))
               }
               disabled={isSubmitting}
-              className="w-full py-2.5 px-4 bg-brand-dark/60 border border-brand-border rounded-md text-text-primary outline-none text-xs transition-all duration-200 focus:border-accent-primary focus:bg-brand-dark/90 focus:ring-2 focus:ring-accent-primary-glow disabled:opacity-50"
+              className={FIELD_INPUT_CLASS}
               required
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">
+            <label className={FIELD_LABEL_CLASS}>
               Review Message
             </label>
             <textarea
@@ -516,7 +506,7 @@ export const ClientReviewsManagement: React.FC = () => {
               }
               disabled={isSubmitting}
               rows={4}
-              className="w-full py-2.5 px-4 bg-brand-dark/60 border border-brand-border rounded-md text-text-primary outline-none text-xs transition-all duration-200 focus:border-accent-primary focus:bg-brand-dark/90 focus:ring-2 focus:ring-accent-primary-glow disabled:opacity-50 resize-none"
+              className={`${FIELD_INPUT_CLASS} resize-none`}
               required
             />
           </div>

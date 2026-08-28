@@ -22,32 +22,8 @@ import {
   isSuperAdmin,
   triggerBlobDownload,
 } from '../../utils/auth';
-
-function formatDate(value: string) {
-  try {
-    return new Date(value).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  } catch {
-    return value;
-  }
-}
-
-function formatDateTime(value: string) {
-  try {
-    return new Date(value).toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return value;
-  }
-}
+import { formatDate, formatDateTime } from '../../utils/format';
+import { axiosMessage } from '../../api/http';
 
 export default function QueryManagement() {
   const [queries, setQueries] = useState<ContactSubmission[]>([]);
@@ -93,11 +69,9 @@ export default function QueryManagement() {
       setTotal(response.pagination?.total ?? 0);
       setTotalPages(response.pagination?.totalPages ?? 1);
     } catch (err: unknown) {
-      const axiosErr = err as {
-        response?: { data?: { message?: string }; status?: number };
-      };
-      const apiMessage = axiosErr.response?.data?.message;
-      setError(apiMessage || 'Failed to load queries. Make sure the backend is running.');
+      setError(
+        axiosMessage(err, 'Failed to load queries. Make sure the backend is running.')
+      );
       setQueries([]);
     } finally {
       setLoading(false);
