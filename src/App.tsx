@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Login } from './pages/Login';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import { AdminDetails } from './pages/AdminDetails';
-import { BlogsManagement } from './pages/BlogsManagement';
+import { BlogsManagement } from './pages/Blogs/BlogsManagement';
 import JobsManagement from './pages/Jobs/JobsManagement';
 import JobApplicationsManagement from './pages/JobApplications/JobApplicationsManagement';
 import QueryManagement from './pages/Query/QueryManagement';

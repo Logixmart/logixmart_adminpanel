@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Sun, Moon } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 import { checkServerHealth } from '../../api/admin';
 import { CompanyLogo } from '../ui/CompanyLogo';
 import { useTheme } from '../../theme';
+import { getPageMeta } from '../../config/pageMeta';
 
 interface NavbarProps {
   activeTab: string;
@@ -11,6 +12,7 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ activeTab }) => {
   const { isDark, toggleTheme } = useTheme();
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
+  const { title, description } = getPageMeta(activeTab);
 
   useEffect(() => {
     const checkHealth = async () => {
@@ -23,41 +25,14 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab }) => {
     return () => clearInterval(interval);
   }, []);
 
-  const getPageTitle = () => {
-    switch (activeTab) {
-      case 'admin-details':
-        return 'Admin Profile';
-      case 'blogs':
-        return 'Blogs Management Portal';
-      case 'jobs':
-        return 'Jobs Management Portal';
-      case 'job-applications':
-        return 'Job Applications';
-      case 'query':
-        return 'Query Portal';
-      case 'client-reviews':
-        return 'Client Reviews';
-      case 'our-work':
-        return 'Our Work';
-      default:
-        return 'Console Gateway';
-    }
-  };
-
   return (
-    <header className="h-[70px] border-b border-brand-border bg-brand-card/70 backdrop-blur-md flex justify-between items-center px-8 sticky top-0 z-[90]">
-      <h2 className="text-lg font-bold text-text-primary capitalize">{getPageTitle()}</h2>
-
-      <div className="flex items-center relative max-w-[320px] w-full">
-        <Search className="absolute left-3 text-text-muted pointer-events-none" size={16} />
-        <input
-          type="text"
-          placeholder="Search repositories, deployments, APIs..."
-          className="w-full py-2 pl-9 pr-4 bg-brand-dark/50 border border-brand-border rounded-md outline-none text-[13px] text-text-primary transition-all duration-200 focus:border-accent-primary focus:bg-brand-dark/80 focus:ring-2 focus:ring-accent-primary-glow"
-        />
+    <header className="min-h-[70px] border-b border-brand-border bg-brand-card/70 backdrop-blur-md flex justify-between items-center px-8 py-3 sticky top-0 z-[90] gap-6">
+      <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+        <h2 className="text-lg font-bold text-text-primary truncate">{title}</h2>
+        <p className="text-xs text-text-muted truncate">{description}</p>
       </div>
 
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-5 flex-shrink-0">
         <button
           type="button"
           onClick={toggleTheme}

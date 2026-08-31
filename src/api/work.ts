@@ -9,8 +9,9 @@ export interface Work {
   id: string;
   title: string;
   description: string;
-  projectUrl?: string | null;
-  webAppUrl?: string | null;
+  websiteUrl?: string | null;
+  appStoreUrl?: string | null;
+  playStoreUrl?: string | null;
   images?: string[];
   createdAt?: string;
   updatedAt?: string;

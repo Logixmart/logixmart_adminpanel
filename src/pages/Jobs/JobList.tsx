@@ -1,17 +1,20 @@
 import { useEffect, useState } from 'react';
 import {
-  AlertCircle,
   Briefcase,
   Building2,
   Edit3,
-  Loader2,
   MapPin,
-  Plus,
-  Search,
   Trash2,
-  X,
 } from 'lucide-react';
-import { Modal } from '../../components/ui/Modal';
+import {
+  DeleteConfirmModal,
+  EmptyState,
+  ErrorBanner,
+  PageHeader,
+  PageLoading,
+  SearchBar,
+  SuccessBanner,
+} from '../../components/ui';
 import {
   deleteJob,
   getJobs,
@@ -101,31 +104,12 @@ export default function JobList({ onCreate, onEdit, refreshKey = 0 }: JobListPro
 
   return (
     <div className="flex flex-col gap-6 w-full animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-bold text-text-primary tracking-tight flex items-center gap-2">
-            <Briefcase size={22} className="text-accent-primary" />
-            Jobs Management Portal
-          </h1>
-          <p className="text-xs text-text-muted">
-            Create and manage career openings for the company website.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={onCreate}
-          className="cursor-pointer font-bold text-[11px] uppercase tracking-wider py-2.5 px-4 rounded-lg bg-accent-primary text-white border-none transition-all hover:bg-accent-primary-hover hover:shadow-lg hover:shadow-accent-primary/25 flex items-center justify-center gap-2 self-start sm:self-auto"
-        >
-          <Plus size={16} /> Create Job Post
-        </button>
-      </div>
+      <PageHeader
+        action={{ label: 'Create Job Post', onClick: onCreate }}
+        actionStyle="uppercase"
+      />
 
-      {successBanner && (
-        <div className="bg-accent-secondary/10 text-accent-secondary border border-accent-secondary/20 py-3 px-4 rounded-md text-xs font-semibold text-center">
-          {successBanner}
-        </div>
-      )}
+      {successBanner && <SuccessBanner message={successBanner} variant="compact" />}
 
       {/* Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
@@ -166,76 +150,35 @@ export default function JobList({ onCreate, onEdit, refreshKey = 0 }: JobListPro
         </div>
       </div>
 
-      {/* Search */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 bg-brand-card/50 border border-brand-border rounded-xl p-4">
-        <div className="flex-1 relative flex items-center">
-          <Search className="absolute left-3 text-text-muted pointer-events-none" size={16} />
-          <input
-            type="text"
-            placeholder="Search jobs by title, company, or skills..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full py-2 px-9 bg-brand-dark/50 border border-brand-border rounded-lg outline-none text-xs text-text-primary transition-all duration-200 focus:border-accent-primary focus:bg-brand-dark/85"
-          />
-          {searchInput && (
-            <button
-              type="button"
-              onClick={() => setSearchInput('')}
-              className="absolute right-3 bg-transparent border-none text-text-muted hover:text-text-primary cursor-pointer flex items-center"
-            >
-              <X size={14} />
-            </button>
-          )}
-        </div>
-      </div>
+      <SearchBar
+        value={searchInput}
+        onChange={setSearchInput}
+        placeholder="Search jobs by title, company, or skills..."
+      />
 
       {error && (
-        <div className="glass-panel p-6 border-accent-danger/25 bg-accent-danger/5 flex items-center gap-3 text-accent-danger max-w-[600px] mx-auto w-full">
-          <AlertCircle size={20} />
-          <div className="flex flex-col">
-            <span className="text-xs font-semibold">API Connection Error</span>
-            <span className="text-[11px] text-accent-danger/80 mt-0.5">{error}</span>
-          </div>
-          <button
-            type="button"
-            onClick={loadJobs}
-            className="ml-auto cursor-pointer font-bold text-[10px] uppercase tracking-wider py-1.5 px-3 bg-accent-danger/10 border border-accent-danger/20 rounded hover:bg-accent-danger/20 transition-all text-accent-danger"
-          >
-            Retry
-          </button>
-        </div>
+        <ErrorBanner
+          error={error}
+          onRetry={loadJobs}
+          retryLabel="Retry"
+        />
       )}
 
       {loading ? (
-        <div className="flex-1 flex flex-col items-center justify-center py-20 gap-3">
-          <Loader2 className="animate-spin text-accent-primary" size={32} />
-          <span className="text-xs text-text-muted font-medium">Loading job posts...</span>
-        </div>
+        <PageLoading message="Loading job posts..." />
       ) : jobs.length === 0 ? (
-        <div className="glass-panel py-16 px-6 flex flex-col items-center justify-center text-center gap-4 max-w-[500px] mx-auto w-full mt-4">
-          <div className="w-16 h-16 rounded-full bg-brand-dark flex items-center justify-center border border-brand-border text-text-muted">
-            <Briefcase size={28} />
-          </div>
-          <div className="flex flex-col gap-1">
-            <h3 className="text-base font-bold text-text-primary">
-              {search ? 'No Results Found' : 'No Job Posts Yet'}
-            </h3>
-            <p className="text-xs text-text-secondary max-w-[340px]">
-              {search
-                ? `No jobs matched "${search}". Try different keywords.`
-                : 'Create your first job opening to list it on the careers page.'}
-            </p>
-          </div>
-          {!search && (
-            <button
-              type="button"
-              onClick={onCreate}
-              className="cursor-pointer font-bold text-[11px] uppercase tracking-wider mt-2 py-2.5 px-4 rounded-lg bg-accent-primary text-white border-none transition-all hover:bg-accent-primary-hover"
-            >
-              Add First Job
-            </button>
-          )}
-        </div>
+        <EmptyState
+          icon={<Briefcase size={28} />}
+          title={search ? 'No Results Found' : 'No Job Posts Yet'}
+          description={
+            search
+              ? `No jobs matched "${search}". Try different keywords.`
+              : 'Create your first job opening to list it on the careers page.'
+          }
+          action={
+            !search ? { label: 'Add First Job', onClick: onCreate } : undefined
+          }
+        />
       ) : (
         <div className="glass-panel overflow-hidden">
           <div className="overflow-x-auto">
@@ -315,43 +258,21 @@ export default function JobList({ onCreate, onEdit, refreshKey = 0 }: JobListPro
         </div>
       )}
 
-      <Modal
+      <DeleteConfirmModal
         isOpen={isDeleteOpen}
-        onClose={() => !isDeleting && setIsDeleteOpen(false)}
+        isSubmitting={isDeleting}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={handleDeleteConfirm}
         title="Delete Job Post"
-      >
-        <div className="flex flex-col gap-5">
-          <p className="text-xs text-text-secondary leading-relaxed">
+        confirmLabel="Delete Job"
+        description={
+          <>
             Are you sure you want to delete{' '}
             <strong className="text-text-primary">"{selectedJob?.title}"</strong>? This cannot be
             undone.
-          </p>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={handleDeleteConfirm}
-              disabled={isDeleting}
-              className="flex-1 cursor-pointer font-semibold py-2.5 border-none rounded-lg text-xs bg-accent-danger text-white hover:bg-accent-danger/90 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-            >
-              {isDeleting ? (
-                <>
-                  <Loader2 className="animate-spin" size={14} /> Deleting...
-                </>
-              ) : (
-                'Delete Job'
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsDeleteOpen(false)}
-              disabled={isDeleting}
-              className="flex-1 cursor-pointer font-semibold py-2.5 rounded-lg text-xs bg-brand-border border border-brand-border text-text-secondary hover:bg-brand-border-hover hover:text-text-primary transition-all disabled:opacity-50"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      </Modal>
+          </>
+        }
+      />
     </div>
   );
 }

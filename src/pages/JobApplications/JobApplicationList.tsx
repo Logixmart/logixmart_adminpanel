@@ -1,16 +1,21 @@
 import { useEffect, useState } from 'react';
 import {
-  AlertCircle,
   Briefcase,
-  ClipboardList,
   Download,
   Eye,
   Loader2,
-  Search,
   Trash2,
-  X,
 } from 'lucide-react';
-import { Modal } from '../../components/ui/Modal';
+import {
+  DeleteConfirmModal,
+  EmptyState,
+  ErrorBanner,
+  PageHeader,
+  PageLoading,
+  Pagination,
+  SearchBar,
+  SuccessBanner,
+} from '../../components/ui';
 import { getJobs, type JobPost } from '../../api/jobPost';
 import {
   deleteJobApplication,
@@ -168,66 +173,40 @@ export default function JobApplicationList({
 
   return (
     <div className="flex flex-col gap-6 w-full animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-bold text-text-primary tracking-tight flex items-center gap-2">
-            <ClipboardList size={22} className="text-accent-primary" />
-            Job Applications
-          </h1>
-          <p className="text-xs text-text-muted">
-            Review candidate submissions, update status, and download resumes.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          {canExport && (
-            <button
-              type="button"
-              onClick={handleExportExcel}
-              disabled={isExporting}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-brand-border bg-brand-card/80 text-xs font-semibold text-text-secondary hover:text-text-primary hover:border-accent-primary/30 disabled:opacity-60"
-            >
-              {isExporting ? (
-                <Loader2 size={14} className="animate-spin" />
-              ) : (
-                <Download size={14} />
-              )}
-              {searchInput || status || jobId
-                ? 'Download Filtered Excel'
-                : 'Download Excel'}
-            </button>
-          )}
-          <span className="text-xs text-text-secondary font-semibold">
-            {total} total
-          </span>
-        </div>
-      </div>
+      <PageHeader
+        trailing={
+          <div className="flex items-center gap-3">
+            {canExport && (
+              <button
+                type="button"
+                onClick={handleExportExcel}
+                disabled={isExporting}
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-brand-border bg-brand-card/80 text-xs font-semibold text-text-secondary hover:text-text-primary hover:border-accent-primary/30 disabled:opacity-60"
+              >
+                {isExporting ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Download size={14} />
+                )}
+                {searchInput || status || jobId
+                  ? 'Download Filtered Excel'
+                  : 'Download Excel'}
+              </button>
+            )}
+            <span className="text-xs text-text-secondary font-semibold">
+              {total} total
+            </span>
+          </div>
+        }
+      />
 
-      {successBanner && (
-        <div className="bg-accent-secondary/10 text-accent-secondary border border-accent-secondary/20 py-3 px-4 rounded-md text-xs font-semibold text-center">
-          {successBanner}
-        </div>
-      )}
+      {successBanner && <SuccessBanner message={successBanner} variant="compact" />}
 
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3.5 bg-brand-card/50 border border-brand-border rounded-xl p-4">
-        <div className="flex-1 relative flex items-center">
-          <Search className="absolute left-3 text-text-muted pointer-events-none" size={16} />
-          <input
-            type="text"
-            placeholder="Search by applicant name or email..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full py-2 px-9 bg-brand-dark/50 border border-brand-border rounded-lg outline-none text-xs text-text-primary transition-all duration-200 focus:border-accent-primary focus:bg-brand-dark/85"
-          />
-          {searchInput && (
-            <button
-              type="button"
-              onClick={() => setSearchInput('')}
-              className="absolute right-3 bg-transparent border-none text-text-muted hover:text-text-primary cursor-pointer flex items-center"
-            >
-              <X size={14} />
-            </button>
-          )}
-        </div>
+      <SearchBar
+        value={searchInput}
+        onChange={setSearchInput}
+        placeholder="Search by applicant name or email..."
+      >
         <select
           value={status}
           onChange={(e) => {
@@ -258,44 +237,29 @@ export default function JobApplicationList({
             </option>
           ))}
         </select>
-      </div>
+      </SearchBar>
 
       {error && (
-        <div className="glass-panel p-6 border-accent-danger/25 bg-accent-danger/5 flex items-center gap-3 text-accent-danger max-w-[600px] mx-auto w-full">
-          <AlertCircle size={20} />
-          <div className="flex flex-col">
-            <span className="text-xs font-semibold">API Error</span>
-            <span className="text-[11px] text-accent-danger/80 mt-0.5">{error}</span>
-          </div>
-          <button
-            type="button"
-            onClick={loadApplications}
-            className="ml-auto cursor-pointer font-bold text-[10px] uppercase tracking-wider py-1.5 px-3 bg-accent-danger/10 border border-accent-danger/20 rounded hover:bg-accent-danger/20 transition-all text-accent-danger"
-          >
-            Retry
-          </button>
-        </div>
+        <ErrorBanner
+          error={error}
+          onRetry={loadApplications}
+          title="API Error"
+          retryLabel="Retry"
+        />
       )}
 
       {loading ? (
-        <div className="flex-1 flex flex-col items-center justify-center py-20 gap-3">
-          <Loader2 className="animate-spin text-accent-primary" size={32} />
-          <span className="text-xs text-text-muted font-medium">Loading applications...</span>
-        </div>
+        <PageLoading message="Loading applications..." />
       ) : applications.length === 0 ? (
-        <div className="glass-panel py-16 px-6 flex flex-col items-center justify-center text-center gap-4 max-w-[500px] mx-auto w-full mt-4">
-          <div className="w-16 h-16 rounded-full bg-brand-dark flex items-center justify-center border border-brand-border text-text-muted">
-            <Briefcase size={28} />
-          </div>
-          <div className="flex flex-col gap-1">
-            <h3 className="text-base font-bold text-text-primary">No Applications Found</h3>
-            <p className="text-xs text-text-secondary max-w-[340px]">
-              {search || status || jobId
-                ? 'Try adjusting search or filters.'
-                : 'Applications will appear here when candidates apply.'}
-            </p>
-          </div>
-        </div>
+        <EmptyState
+          icon={<Briefcase size={28} />}
+          title="No Applications Found"
+          description={
+            search || status || jobId
+              ? 'Try adjusting search or filters.'
+              : 'Applications will appear here when candidates apply.'
+          }
+        />
       ) : (
         <>
           <div className="glass-panel overflow-hidden">
@@ -370,69 +334,28 @@ export default function JobApplicationList({
             </div>
           </div>
 
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-3">
-              <button
-                type="button"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="cursor-pointer text-xs py-2 px-3 rounded-md border border-brand-border text-text-secondary disabled:opacity-40"
-              >
-                Previous
-              </button>
-              <span className="text-xs text-text-muted">
-                Page {page} of {totalPages}
-              </span>
-              <button
-                type="button"
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => p + 1)}
-                className="cursor-pointer text-xs py-2 px-3 rounded-md border border-brand-border text-text-secondary disabled:opacity-40"
-              >
-                Next
-              </button>
-            </div>
-          )}
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
         </>
       )}
 
-      <Modal
+      <DeleteConfirmModal
         isOpen={isDeleteOpen}
-        onClose={() => !isDeleting && setIsDeleteOpen(false)}
+        isSubmitting={isDeleting}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={handleDeleteConfirm}
         title="Delete Application"
-      >
-        <div className="flex flex-col gap-5">
-          <p className="text-xs text-text-secondary leading-relaxed">
+        description={
+          <>
             Delete application from{' '}
             <strong className="text-text-primary">"{selected?.applicantName}"</strong>? The resume
             file will also be removed if present.
-          </p>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={handleDeleteConfirm}
-              disabled={isDeleting}
-              className="flex-1 cursor-pointer font-semibold py-2.5 border-none rounded-lg text-xs bg-accent-danger text-white hover:bg-accent-danger/90 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-            >
-              {isDeleting ? (
-                <>
-                  <Loader2 className="animate-spin" size={14} /> Deleting...
-                </>
-              ) : (
-                'Delete'
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsDeleteOpen(false)}
-              disabled={isDeleting}
-              className="flex-1 cursor-pointer font-semibold py-2.5 rounded-lg text-xs bg-brand-border border border-brand-border text-text-secondary hover:bg-brand-border-hover hover:text-text-primary transition-all disabled:opacity-50"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      </Modal>
+          </>
+        }
+      />
     </div>
   );
 }
