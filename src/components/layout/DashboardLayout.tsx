@@ -31,7 +31,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       />
       <div className="flex flex-col flex-1 min-h-screen min-w-0">
         <Navbar activeTab={activeTab} />
-        <main className="flex-1 p-8 overflow-y-auto bg-brand-dark flex flex-col">
+        <main className="flex-1 p-4 sm:p-8 overflow-y-auto bg-brand-dark flex flex-col min-h-0">
           {children}
         </main>
       </div>

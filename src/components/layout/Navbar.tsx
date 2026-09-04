@@ -26,13 +26,13 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab }) => {
   }, []);
 
   return (
-    <header className="min-h-[70px] border-b border-brand-border bg-brand-card/70 backdrop-blur-md flex justify-between items-center px-8 py-3 sticky top-0 z-[90] gap-6">
-      <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-        <h2 className="text-lg font-bold text-text-primary truncate">{title}</h2>
-        <p className="text-xs text-text-muted truncate">{description}</p>
+    <header className="min-h-[70px] border-b border-brand-border bg-brand-card/70 backdrop-blur-md flex justify-between items-center px-4 sm:px-8 py-3 sticky top-0 z-[90] gap-4 sm:gap-6 pt-[max(0.75rem,env(safe-area-inset-top,0px))]">
+      <div className="flex flex-col gap-0.5 min-w-0 flex-1 pr-2">
+        <h2 className="text-base sm:text-lg font-bold text-text-primary leading-tight">{title}</h2>
+        <p className="text-[11px] sm:text-xs text-text-muted line-clamp-2 sm:line-clamp-1">{description}</p>
       </div>
 
-      <div className="flex items-center gap-5 flex-shrink-0">
+      <div className="flex items-center gap-3 sm:gap-5 flex-shrink-0">
         <button
           type="button"
           onClick={toggleTheme}
@@ -48,7 +48,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab }) => {
           <div className="w-9 h-9 rounded-full bg-brand-dark border border-brand-border shadow-sm overflow-hidden flex items-center justify-center p-1.5">
             <CompanyLogo className="w-full h-full" />
           </div>
-          <div className="flex flex-col">
+          <div className="hidden sm:flex flex-col">
             <span className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
               Admin Portal
               <span

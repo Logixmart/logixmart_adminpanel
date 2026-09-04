@@ -51,8 +51,9 @@ export function WorkFormModal({
       isOpen={isOpen}
       onClose={() => !isSubmitting && onClose()}
       title={modalMode === 'create' ? 'Add Work' : 'Edit Work'}
+      size="lg"
     >
-      <form onSubmit={onSubmit} className="flex flex-col gap-4">
+      <form onSubmit={onSubmit} className="flex flex-col gap-4 min-w-0">
         {formError && (
           <div className="bg-accent-danger/10 border border-accent-danger/20 text-accent-danger p-3 rounded-lg text-xs font-semibold flex items-center gap-2">
             <AlertCircle size={14} className="flex-shrink-0" />
@@ -86,39 +87,42 @@ export function WorkFormModal({
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="flex flex-col gap-1.5">
-            <label className={FIELD_LABEL_CLASS}>Website URL</label>
-            <input
-              type="url"
-              placeholder="https://example.com"
-              value={form.websiteUrl}
-              onChange={(e) => onFormChange({ websiteUrl: e.target.value })}
-              disabled={isSubmitting}
-              className={FIELD_INPUT_CLASS}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label className={FIELD_LABEL_CLASS}>App Store URL</label>
-            <input
-              type="url"
-              placeholder="https://apps.apple.com/..."
-              value={form.appStoreUrl}
-              onChange={(e) => onFormChange({ appStoreUrl: e.target.value })}
-              disabled={isSubmitting}
-              className={FIELD_INPUT_CLASS}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label className={FIELD_LABEL_CLASS}>Play Store URL</label>
-            <input
-              type="url"
-              placeholder="https://play.google.com/..."
-              value={form.playStoreUrl}
-              onChange={(e) => onFormChange({ playStoreUrl: e.target.value })}
-              disabled={isSubmitting}
-              className={FIELD_INPUT_CLASS}
-            />
+        <div className="flex flex-col gap-3">
+          <span className={FIELD_LABEL_CLASS}>Project Links (optional)</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5 min-w-0">
+              <label className={FIELD_LABEL_CLASS}>Website URL</label>
+              <input
+                type="url"
+                placeholder="https://example.com"
+                value={form.websiteUrl}
+                onChange={(e) => onFormChange({ websiteUrl: e.target.value })}
+                disabled={isSubmitting}
+                className={`${FIELD_INPUT_CLASS} min-w-0`}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5 min-w-0">
+              <label className={FIELD_LABEL_CLASS}>App Store URL</label>
+              <input
+                type="url"
+                placeholder="https://apps.apple.com/..."
+                value={form.appStoreUrl}
+                onChange={(e) => onFormChange({ appStoreUrl: e.target.value })}
+                disabled={isSubmitting}
+                className={`${FIELD_INPUT_CLASS} min-w-0`}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5 min-w-0 sm:col-span-2">
+              <label className={FIELD_LABEL_CLASS}>Play Store URL</label>
+              <input
+                type="url"
+                placeholder="https://play.google.com/..."
+                value={form.playStoreUrl}
+                onChange={(e) => onFormChange({ playStoreUrl: e.target.value })}
+                disabled={isSubmitting}
+                className={`${FIELD_INPUT_CLASS} min-w-0`}
+              />
+            </div>
           </div>
         </div>
 
@@ -128,7 +132,7 @@ export function WorkFormModal({
           </label>
 
           {(visibleExisting.length > 0 || newPreviews.length > 0) && (
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
               {visibleExisting.map((img, imgIndex) => (
                 <div
                   key={img.key}
@@ -229,11 +233,11 @@ export function WorkFormModal({
           )}
         </div>
 
-        <div className="flex gap-3 pt-3 mt-1">
+        <div className="flex flex-col-reverse sm:flex-row gap-3 pt-3 mt-1">
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex-1 cursor-pointer font-semibold py-2.5 border-none rounded-lg text-xs bg-accent-primary text-white hover:bg-accent-primary-hover hover:shadow-lg hover:shadow-accent-primary/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+            className="flex-1 cursor-pointer font-semibold py-2.5 border-none rounded-lg text-xs bg-accent-primary text-white hover:bg-accent-primary-hover hover:shadow-lg hover:shadow-accent-primary/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50 w-full sm:w-auto"
           >
             {isSubmitting ? (
               <>
@@ -250,7 +254,7 @@ export function WorkFormModal({
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="flex-1 cursor-pointer font-semibold py-2.5 rounded-lg text-xs bg-brand-border border border-brand-border text-text-secondary hover:bg-brand-border-hover hover:text-text-primary transition-all disabled:opacity-50"
+            className="flex-1 cursor-pointer font-semibold py-2.5 rounded-lg text-xs bg-brand-border border border-brand-border text-text-secondary hover:bg-brand-border-hover hover:text-text-primary transition-all disabled:opacity-50 w-full sm:w-auto"
           >
             Cancel
           </button>

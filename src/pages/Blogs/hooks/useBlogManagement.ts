@@ -161,10 +161,9 @@ export function useBlogManagement() {
       setFormError(validationError);
       return;
     }
-
+    const isImageRemoved = imageFile === null;
     setIsSubmitting(true);
-    const formData = buildBlogFormData(form, imageFile);
-
+    const formData = buildBlogFormData(form, imageFile, isImageRemoved);
     const response =
       modalMode === 'create'
         ? await createBlog(formData)

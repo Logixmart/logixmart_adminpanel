@@ -34,16 +34,33 @@ export function validateBlogForm(form: BlogFormValues): string | null {
   return null;
 }
 
+// export function buildBlogFormData(
+//   form: BlogFormValues,
+//   imageFile: File | null
+// ): FormData {
+//   const formData = new FormData();
+//   formData.append('title', form.title.trim());
+//   formData.append('description', form.description.trim());
+//   if (imageFile) {
+//     formData.append('image', imageFile);
+//   }
+//   return formData;
+// }
 export function buildBlogFormData(
   form: BlogFormValues,
-  imageFile: File | null
+  imageFile: File | null,
+  isImageRemoved: boolean // Add a flag tracking if user deleted the existing photo
 ): FormData {
   const formData = new FormData();
   formData.append('title', form.title.trim());
   formData.append('description', form.description.trim());
+
   if (imageFile) {
     formData.append('image', imageFile);
+  } else if (isImageRemoved) {
+    formData.append('removeImage', 'true'); // Flag sent to backend
   }
+
   return formData;
 }
 
