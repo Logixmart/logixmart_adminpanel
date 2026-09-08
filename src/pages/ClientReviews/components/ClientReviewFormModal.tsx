@@ -49,6 +49,7 @@ export function ClientReviewFormModal({
             disabled={isSubmitting}
             className={FIELD_INPUT_CLASS}
             required
+            maxLength={10}
           />
         </div>
 
@@ -62,6 +63,7 @@ export function ClientReviewFormModal({
               onChange={(e) => onFormChange({ companyName: e.target.value })}
               disabled={isSubmitting}
               className={FIELD_INPUT_CLASS}
+              maxLength={25}
             />
           </div>
 
@@ -74,6 +76,7 @@ export function ClientReviewFormModal({
               onChange={(e) => onFormChange({ designation: e.target.value })}
               disabled={isSubmitting}
               className={FIELD_INPUT_CLASS}
+              maxLength={25}
             />
           </div>
         </div>
@@ -88,6 +91,7 @@ export function ClientReviewFormModal({
             disabled={isSubmitting}
             className={FIELD_INPUT_CLASS}
             required
+            maxLength={20}
           />
         </div>
 
@@ -101,7 +105,9 @@ export function ClientReviewFormModal({
             rows={4}
             className={`${FIELD_INPUT_CLASS} resize-none`}
             required
+            maxLength={300}
           />
+          <p className="text-xs text-text-muted">{form.message.length} / 300</p>
         </div>
 
         <div className="flex gap-3 pt-3 mt-1">

@@ -8,12 +8,15 @@ interface LoginProps {
   onLoginSuccess: (session: LoginSession) => void;
 }
 
+let keepActivePreference = true;
+
 export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [keepActive, setKeepActive] = useState(keepActivePreference);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,7 +116,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
 
           <div className="flex justify-between items-center text-[12px]">
             <label className="flex items-center gap-2 text-text-secondary cursor-pointer">
-              <input type="checkbox" className="accent-accent-primary cursor-pointer w-3.5 h-3.5" defaultChecked />
+              <input type="checkbox" className="accent-accent-primary cursor-pointer w-3.5 h-3.5" checked={keepActive} onChange={(e) => { setKeepActive(e.target.checked); keepActivePreference = e.target.checked; }} />
               Keep terminal session active
             </label>
             <a 

@@ -8,6 +8,7 @@ import {
 export interface Work {
   id: string;
   title: string;
+  category: string;
   description: string;
   websiteUrl?: string | null;
   appStoreUrl?: string | null;
@@ -67,7 +68,6 @@ export async function getWorks(): Promise<WorkListResponse> {
     'Unable to connect to the backend server. Make sure it is running.',
     { success: false, data: [] }
   );
-
   return {
     ...result,
     data: (result.data || []).map((item) =>
@@ -76,20 +76,19 @@ export async function getWorks(): Promise<WorkListResponse> {
   };
 }
 
-export async function getWorkById(id: string): Promise<WorkResponse> {
-  const result = await wrapGet(
-    () => worksApi.get<WorkResponse>(`/${id}`),
-    'Failed to retrieve work details.',
-    { success: false }
-  );
-
-  return {
-    ...result,
-    data: result.data
-      ? normalizeWork(result.data as Work & { _id?: string })
-      : undefined,
-  };
-}
+// export async function getWorkById(id: string): Promise<WorkResponse> {
+//   const result = await wrapGet(
+//     () => worksApi.get<WorkResponse>(`/${id}`),
+//     'Failed to retrieve work details.',
+//     { success: false }
+//   );
+//   return {
+//     ...result,
+//     data: result.data
+//       ? normalizeWork(result.data as Work & { _id?: string })
+//       : undefined,
+//   };
+// }
 
 export async function createWork(
   formData: FormData

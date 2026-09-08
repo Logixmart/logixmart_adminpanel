@@ -3,7 +3,7 @@ import { getWorkImageItems } from '../../../api/work';
 import { formatDate } from '../../../utils/format';
 
 export const PAGE_SIZE = 12;
-export const MAX_IMAGES = 10;
+export const MAX_IMAGES = 5;
 export const MAX_FILE_SIZE = 5 * 1024 * 1024;
 export const ALLOWED_TYPES = [
   'image/jpeg',
@@ -11,13 +11,20 @@ export const ALLOWED_TYPES = [
   'image/png',
   'image/webp',
 ];
-
+export const projectCategories = [
+  'Web Development',
+  'App Development',
+  'UI/UX Design',
+  'Digital Marketing',
+  'Branding',
+];
 export const emptyForm = {
   title: '',
   description: '',
   websiteUrl: '',
   appStoreUrl: '',
   playStoreUrl: '',
+  category: '',
 };
 
 export type WorkFormValues = typeof emptyForm;
@@ -92,6 +99,7 @@ export function buildWorkFormData(
 ): FormData {
   const formData = new FormData();
   formData.append('title', form.title.trim());
+  formData.append('category', form.category.trim());
   formData.append('description', form.description.trim());
   formData.append('websiteUrl', form.websiteUrl.trim());
   formData.append('appStoreUrl', form.appStoreUrl.trim());
@@ -101,7 +109,6 @@ export function buildWorkFormData(
   if (modalMode === 'edit' && removedImageKeys.length > 0) {
     formData.append('removeImages', JSON.stringify(removedImageKeys));
   }
-
   return formData;
 }
 

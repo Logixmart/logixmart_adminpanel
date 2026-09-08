@@ -3,7 +3,7 @@ import { AlertCircle, Loader2, Upload, X } from 'lucide-react';
 import { Modal } from '../../../components/ui/Modal';
 import type { WorkImageItem } from '../../../api/work';
 import { FIELD_INPUT_CLASS, FIELD_LABEL_CLASS } from '../../../utils/styles';
-import { MAX_IMAGES, type WorkFormValues } from '../utils/workHelpers';
+import { MAX_IMAGES, projectCategories, type WorkFormValues } from '../utils/workHelpers';
 
 interface WorkFormModalProps {
   isOpen: boolean;
@@ -125,6 +125,17 @@ export function WorkFormModal({
             </div>
           </div>
         </div>
+        <div className="flex flex-col gap-1.5">
+          <label className={FIELD_LABEL_CLASS}>Project Field</label>
+          <select value={form.category} onChange={(e) => onFormChange({ category: e.target.value })} className={FIELD_INPUT_CLASS} required>
+            <option value="">Select Project Field</option>
+            {projectCategories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <div className="flex flex-col gap-1.5">
           <label className={FIELD_LABEL_CLASS}>
@@ -201,6 +212,7 @@ export function WorkFormModal({
               ))}
             </div>
           )}
+
 
           {totalImageCount < MAX_IMAGES && (
             <div

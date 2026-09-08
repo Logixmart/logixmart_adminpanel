@@ -58,7 +58,6 @@ export async function updateBlog(
   id: string,
   formData: FormData
 ): Promise<ActionResponse> {
-  console.log('formData entries:', [...formData.entries()]);
   return wrapAction(
     () => blogsApi.put<ActionResponse>(`/${id}`, formData),
     'Failed to update blog post.',

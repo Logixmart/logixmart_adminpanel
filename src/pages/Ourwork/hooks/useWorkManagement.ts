@@ -112,6 +112,7 @@ export function useWorkManagement() {
       websiteUrl: work.websiteUrl || '',
       appStoreUrl: work.appStoreUrl || '',
       playStoreUrl: work.playStoreUrl || '',
+      category: work.category || '',
     });
     setExistingImages(getWorkImageItems(work));
     setRemovedImageKeys([]);
