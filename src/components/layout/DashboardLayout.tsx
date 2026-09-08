@@ -21,17 +21,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   return (
     <div className="flex min-h-screen bg-brand-dark w-screen overflow-hidden">
-      <Sidebar 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        collapsed={collapsed} 
-        setCollapsed={setCollapsed} 
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        collapsed={collapsed}
+        setCollapsed={setCollapsed}
         adminName={adminName}
         onLogout={onLogout}
       />
       <div className="flex flex-col flex-1 min-h-screen min-w-0">
         <Navbar activeTab={activeTab} />
-        <main className="flex-1 p-8 overflow-y-auto bg-brand-dark flex flex-col">
+        <main className="flex-1 p-4 sm:p-8 overflow-y-auto bg-brand-dark flex flex-col min-h-0">
           {children}
         </main>
       </div>

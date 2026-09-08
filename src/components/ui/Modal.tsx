@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -6,9 +7,21 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  size?: 'default' | 'lg';
 }
 
-export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
+const modalWidthClass = {
+  default: 'max-w-[500px]',
+  lg: 'max-w-[720px]',
+} as const;
+
+export const Modal: React.FC<ModalProps> = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  size = 'default',
+}) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -33,30 +46,45 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
     }
   };
 
-  return (
-    <div 
-      className="fixed inset-0 bg-brand-dark/80 backdrop-blur-md flex justify-center items-center z-[1000] p-6 animate-fade-in" 
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[1000] overflow-y-auto bg-brand-dark/80 backdrop-blur-md animate-fade-in"
       onClick={handleOverlayClick}
+      role="presentation"
     >
-      <div className="w-full max-w-[500px] bg-brand-card border border-brand-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
-        {/* Header */}
-        <div className="flex justify-between items-center px-6 py-4 border-b border-brand-border">
-          <h3 className="text-base font-bold text-text-primary">{title}</h3>
-          <button 
-            className="bg-transparent border-none text-text-muted cursor-pointer flex items-center justify-center w-7 h-7 rounded-full transition-all duration-200 hover:bg-brand-border hover:text-text-primary" 
-            onClick={onClose} 
-            aria-label="Close modal"
-          >
-            <X size={18} />
-          </button>
-        </div>
-        
-        {/* Content Body */}
-        <div className="p-6 overflow-y-auto max-h-[calc(100vh-180px)]">
-          {children}
+      <div className="flex min-h-full items-start sm:items-center justify-center p-3 sm:p-6 pt-[max(0.75rem,env(safe-area-inset-top,0px))] pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]">
+        <div
+          className={`w-full ${modalWidthClass[size]} bg-brand-card border border-brand-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up max-h-[calc(100dvh-1.5rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] sm:max-h-[calc(100dvh-3rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))]`}
+          onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-title"
+        >
+          <div className="sticky top-0 z-10 flex shrink-0 justify-between items-center px-4 sm:px-6 py-4 border-b border-brand-border gap-3 bg-brand-card">
+            <h3
+              id="modal-title"
+              className="text-base font-bold text-text-primary truncate min-w-0"
+            >
+              {title}
+            </h3>
+            <button
+              type="button"
+              className="bg-transparent border-none text-text-muted cursor-pointer flex items-center justify-center w-7 h-7 rounded-full transition-all duration-200 hover:bg-brand-border hover:text-text-primary shrink-0"
+              onClick={onClose}
+              aria-label="Close modal"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          <div className="p-4 sm:p-6 overflow-y-auto min-h-0 flex-1 overscroll-contain">
+            {children}
+          </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
+
 export default Modal;
