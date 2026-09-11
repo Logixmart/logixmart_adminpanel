@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 interface ImageViewerProps {
@@ -49,9 +50,15 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
       setIsDragging(false);
     }
   }, [isOpen, startIndex, count]);
-
+  
   useEffect(() => {
     if (!isOpen) return;
+
+    const scrollY = window.scrollY;
+
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -59,10 +66,15 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
       if (e.key === 'ArrowRight') goNext();
     };
 
-    document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', handleKeyDown);
+
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+
+      window.scrollTo(0, scrollY);
+
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, onClose, goPrev, goNext]);
@@ -77,35 +89,36 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
     if (delta >= SWIPE_THRESHOLD) goPrev();
   };
 
-  return (
-    <div
-      className="fixed inset-0 z-[1100] bg-black/90 backdrop-blur-md flex flex-col animate-fade-in"
-      onClick={onClose}
-    >
+  return createPortal(
+    (
+    <div className="fixed inset-0 z-[1100] h-[100dvh] bg-black/90 backdrop-blur-md flex flex-col">
       <div
-        className="flex items-center justify-between px-5 py-4 shrink-0"
+        className="flex items-center justify-between px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-4 shrink-0 relative z-50"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex flex-col min-w-0">
           {title && (
-            <h3 className="text-sm font-bold text-white truncate">{title}</h3>
+            <h3 className="text-sm font-bold text-white truncate">
+              {title}
+            </h3>
           )}
+
           <span className="text-[11px] text-white/60 font-medium">
             {index + 1} / {count}
           </span>
         </div>
+
         <button
           type="button"
           onClick={onClose}
-          className="bg-white/10 border-none text-white cursor-pointer flex items-center justify-center w-9 h-9 rounded-full hover:bg-white/20 transition-colors"
+          className="relative z-50 bg-white/10 border-none text-white cursor-pointer flex items-center justify-center w-9 h-9 rounded-full hover:bg-white/20 transition-colors"
           aria-label="Close image viewer"
         >
           <X size={18} />
         </button>
       </div>
 
-      <div
-        className="flex-1 relative min-h-0 flex items-center"
+      <div className="w-full h-full overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {canSlide && (
@@ -195,11 +208,10 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
               key={`dot-${src}-${i}`}
               type="button"
               onClick={() => goTo(i)}
-              className={`h-12 w-12 rounded-md overflow-hidden border-2 p-0 cursor-pointer transition-all ${
-                i === index
-                  ? 'border-white opacity-100 scale-105'
-                  : 'border-transparent opacity-50 hover:opacity-80'
-              }`}
+              className={`h-12 w-12 rounded-md overflow-hidden border-2 p-0 cursor-pointer transition-all ${i === index
+                ? 'border-white opacity-100 scale-105'
+                : 'border-transparent opacity-50 hover:opacity-80'
+                }`}
               aria-label={`View image ${i + 1}`}
             >
               <img
@@ -213,6 +225,8 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
         </div>
       )}
     </div>
+    ),
+    document.body
   );
 };
 

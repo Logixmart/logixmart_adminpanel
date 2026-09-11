@@ -44,8 +44,12 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         role: response.admin?.role,
         id: response.admin?.id,
       });
+      setEmail('');
+      setPassword('');
     } else {
       setError(response.message || 'Invalid operator email or access passcode');
+      setEmail('');
+      setPassword('');
     }
   };
 
@@ -66,7 +70,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         </div>
 
         {/* Login Form */}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <form onSubmit={handleSubmit} autoComplete="off" className="flex flex-col gap-5">
           {error && (
             <div className="bg-accent-danger/10 text-accent-danger border border-accent-danger/20 p-3 rounded-md text-xs font-medium flex items-center gap-2 animate-[shake_0.4s_ease_forwards]">
               <AlertCircle size={16} />
@@ -80,6 +84,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
               <Mail className="absolute left-3.5 text-text-muted pointer-events-none" size={16} />
               <input
                 type="email"
+                name="email"
+                autoComplete="off"
                 placeholder="developer@logixmart.com"
                 className="w-full py-2.5 pl-10 pr-10 bg-brand-dark/60 border border-brand-border rounded-md text-text-primary text-[13px] outline-none transition-all duration-200 focus:border-accent-primary focus:bg-brand-dark/90 focus:ring-2 focus:ring-accent-primary-glow"
                 value={email}
@@ -96,6 +102,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
               <Lock className="absolute left-3.5 text-text-muted pointer-events-none" size={16} />
               <input
                 type={showPassword ? 'text' : 'password'}
+                name="password"
+                autoComplete="new-password"
                 placeholder="••••••••"
                 className="w-full py-2.5 pl-10 pr-10 bg-brand-dark/60 border border-brand-border rounded-md text-text-primary text-[13px] outline-none transition-all duration-200 focus:border-accent-primary focus:bg-brand-dark/90 focus:ring-2 focus:ring-accent-primary-glow"
                 value={password}
@@ -119,13 +127,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
               <input type="checkbox" className="accent-accent-primary cursor-pointer w-3.5 h-3.5" checked={keepActive} onChange={(e) => { setKeepActive(e.target.checked); keepActivePreference = e.target.checked; }} />
               Keep terminal session active
             </label>
-            <a 
-              href="#forgot" 
-              className="text-accent-primary font-medium hover:text-accent-primary-hover transition-colors duration-200" 
-              onClick={(e) => { e.preventDefault(); alert("Contact system administrator to reset credentials (HQ support)."); }}
-            >
-              Forgot Code?
-            </a>
           </div>
 
           <button 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon } from 'lucide-react';
+import { Menu, Sun, Moon } from 'lucide-react';
 import { checkServerHealth } from '../../api/admin';
 import { CompanyLogo } from '../ui/CompanyLogo';
 import { useTheme } from '../../theme';
@@ -7,9 +7,10 @@ import { getPageMeta } from '../../config/pageMeta';
 
 interface NavbarProps {
   activeTab: string;
+  onMenuClick: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ activeTab }) => {
+export const Navbar: React.FC<NavbarProps> = ({ activeTab, onMenuClick }) => {
   const { isDark, toggleTheme } = useTheme();
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
   const { title, description } = getPageMeta(activeTab);
@@ -26,23 +27,34 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab }) => {
   }, []);
 
   return (
-    <header className="min-h-[70px] border-b border-brand-border bg-brand-card/70 backdrop-blur-md flex justify-between items-center px-4 sm:px-8 py-3 sticky top-0 z-[90] gap-4 sm:gap-6 pt-[max(0.75rem,env(safe-area-inset-top,0px))]">
-      <div className="flex flex-col gap-0.5 min-w-0 flex-1 pr-2">
-        <h2 className="text-base sm:text-lg font-bold text-text-primary leading-tight">{title}</h2>
-        <p className="text-[11px] sm:text-xs text-text-muted line-clamp-2 sm:line-clamp-1">{description}</p>
+    <header className="min-h-[64px] sm:min-h-[70px] border-b border-brand-border bg-brand-card/80 backdrop-blur-md flex justify-between items-center px-3 sm:px-8 py-2.5 sm:py-3 sticky top-0 z-[90] gap-3 sm:gap-6 pt-[max(0.625rem,env(safe-area-inset-top,0px))]">
+      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+        <button
+          type="button"
+          onClick={onMenuClick}
+          className="md:hidden shrink-0 bg-transparent border border-brand-border text-text-secondary cursor-pointer flex items-center justify-center w-9 h-9 rounded-md transition-colors hover:bg-brand-hover hover:text-text-primary"
+          aria-label="Open navigation menu"
+          title="Open navigation menu"
+        >
+          <Menu size={19} />
+        </button>
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <h2 className="text-sm sm:text-lg font-bold text-text-primary leading-tight truncate">{title}</h2>
+          <p className="hidden sm:block text-xs text-text-muted truncate">{description}</p>
+        </div>
       </div>
 
-      <div className="flex items-center gap-3 sm:gap-5 flex-shrink-0">
+      <div className="flex items-center gap-1.5 sm:gap-5 flex-shrink-0">
         <button
           type="button"
           onClick={toggleTheme}
-          className="bg-transparent border-none text-text-secondary cursor-pointer flex items-center justify-center w-9 h-9 rounded-md border border-transparent transition-all duration-200 hover:bg-brand-border hover:text-text-primary relative"
+          className="bg-transparent border border-transparent text-text-secondary cursor-pointer flex items-center justify-center w-9 h-9 rounded-md transition-all duration-200 hover:bg-brand-hover hover:text-text-primary relative"
           title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
         >
           {isDark ? <Sun size={18} /> : <Moon size={18} />}
         </button>
 
-        <div className="w-[1px] h-6 bg-brand-border" />
+        <div className="hidden sm:block w-[1px] h-6 bg-brand-border" />
 
         <div className="flex items-center gap-3 cursor-pointer">
           <div className="w-9 h-9 rounded-full bg-brand-dark border border-brand-border shadow-sm overflow-hidden flex items-center justify-center p-1.5">

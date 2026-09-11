@@ -2,6 +2,7 @@ import React from 'react';
 import {
   ChevronLeft,
   ChevronRight,
+  X,
   User,
   LogOut,
   FileText,
@@ -19,6 +20,8 @@ interface SidebarProps {
   setCollapsed: (collapsed: boolean) => void;
   adminName: string;
   onLogout: () => void;
+  mobileOpen: boolean;
+  onMobileClose: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -28,6 +31,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setCollapsed,
   adminName,
   onLogout,
+  mobileOpen,
+  onMobileClose,
 }) => {
   const menuItems = [
     { id: 'admin-details', label: 'Admin Profile', icon: <User size={20} /> },
@@ -56,9 +61,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside
-      className={`h-screen sticky top-0 bg-brand-sidebar border-r border-brand-border flex flex-col transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] z-[100] ${
-        collapsed ? 'w-[80px]' : 'w-[260px]'
-      }`}
+      className={`h-dvh md:h-screen fixed md:sticky top-0 left-0 bg-brand-sidebar border-r border-brand-border flex flex-col transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] z-[100] w-[min(86vw,260px)] md:translate-x-0 ${
+        mobileOpen ? 'translate-x-0' : '-translate-x-full'
+      } ${collapsed ? 'md:w-[80px]' : 'md:w-[260px]'}`}
     >
       <div
         className={`h-[70px] flex items-center border-b border-brand-border gap-2.5 overflow-hidden ${
@@ -75,13 +80,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
         >
           Logix<span className="text-accent-primary">mart</span> IT Solutions
         </span>
+        <button
+          type="button"
+          onClick={onMobileClose}
+          className="md:hidden ml-auto shrink-0 bg-transparent border border-transparent text-text-muted cursor-pointer flex items-center justify-center w-8 h-8 rounded-md hover:bg-brand-hover hover:text-text-primary"
+          aria-label="Close navigation menu"
+        >
+          <X size={18} />
+        </button>
       </div>
 
       <nav className="flex-1 py-6 px-3 flex flex-col gap-1.5">
         {menuItems.map((item) => (
           <div
             key={item.id}
-            onClick={() => setActiveTab(item.id)}
+            onClick={() => {
+              setActiveTab(item.id);
+              onMobileClose();
+            }}
             className={`flex items-center gap-3.5 py-3 rounded-lg text-text-secondary font-medium cursor-pointer transition-all duration-200 border border-transparent whitespace-nowrap hover:text-text-primary hover:bg-white/[0.03] ${
               collapsed ? 'px-0 justify-center' : 'px-4'
             } ${
