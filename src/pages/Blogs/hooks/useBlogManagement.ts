@@ -161,7 +161,8 @@ export function useBlogManagement() {
       setFormError(validationError);
       return;
     }
-    const isImageRemoved = imageFile === null;
+    const isImageRemoved =
+      modalMode === 'edit' && imageFile === null && imagePreview === null;
     setIsSubmitting(true);
     const formData = buildBlogFormData(form, imageFile, isImageRemoved);
     const response =
