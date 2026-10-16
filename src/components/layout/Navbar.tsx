@@ -22,7 +22,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onMenuClick }) => {
     };
 
     checkHealth();
-    const interval = setInterval(checkHealth, 10000);
+    const interval = setInterval(checkHealth, 30_000);
     return () => clearInterval(interval);
   }, []);
 

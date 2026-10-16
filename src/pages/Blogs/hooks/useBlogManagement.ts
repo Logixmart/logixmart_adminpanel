@@ -16,6 +16,7 @@ import {
   updateBlog,
 } from '../../../api/blogs';
 import { resolveMediaUrl } from '../../../api/http';
+import { uploadImage } from '../../../utils/imageUpload';
 import {
   buildBlogFormData,
   countBlogsWithImages,
@@ -164,7 +165,24 @@ export function useBlogManagement() {
     const isImageRemoved =
       modalMode === 'edit' && imageFile === null && imagePreview === null;
     setIsSubmitting(true);
-    const formData = buildBlogFormData(form, imageFile, isImageRemoved);
+
+    let imagePath: string | null = null;
+    if (imageFile) {
+      try {
+        const uploaded = await uploadImage(imageFile, 'blogs');
+        imagePath = uploaded.path;
+      } catch (uploadError) {
+        setIsSubmitting(false);
+        setFormError(
+          uploadError instanceof Error
+            ? uploadError.message
+            : 'Failed to upload image. Please try again.'
+        );
+        return;
+      }
+    }
+
+    const formData = buildBlogFormData(form, imagePath, isImageRemoved);
     const response =
       modalMode === 'create'
         ? await createBlog(formData)

@@ -1,5 +1,6 @@
 import axios, { type AxiosInstance } from 'axios';
 import { attachAuthInterceptors } from './authInterceptor';
+import { getStoragePublicUrl, isStorageObjectPath } from '../config/supabase';
 
 const API_URL = import.meta.env.VITE_API_URL as string;
 
@@ -58,6 +59,10 @@ export function resolveMediaUrl(path?: string | null): string {
   if (!path) return '';
   if (path.startsWith('http://') || path.startsWith('https://')) {
     return path;
+  }
+  if (isStorageObjectPath(path)) {
+    const publicUrl = getStoragePublicUrl(path);
+    if (publicUrl) return publicUrl;
   }
   const origin = String(API_URL || '').replace(/\/api\/?$/, '');
   return `${origin}${path.startsWith('/') ? path : `/${path}`}`;
