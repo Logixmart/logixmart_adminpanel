@@ -1,13 +1,7 @@
-import { useState, useEffect } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { Login } from './pages/Login';
 import { DashboardLayout } from './components/layout/DashboardLayout';
-import { AdminDetails } from './pages/AdminDetails';
-import { BlogsManagement } from './pages/Blogs/BlogsManagement';
-import JobsManagement from './pages/Jobs/JobsManagement';
-import JobApplicationsManagement from './pages/JobApplications/JobApplicationsManagement';
-import QueryManagement from './pages/Query/QueryManagement';
-import WorkManagement from './pages/Ourwork/WorkManagement';
-import ClientReviewsManagement from './pages/ClientReviews/ClientReviewsManagement';
+import { PageLoading } from './components/ui';
 import { logoutAdmin, displayNameFromEmail, type LoginSession } from './api/admin';
 import {
   ensureValidSession,
@@ -22,7 +16,29 @@ import {
   isSuperAdmin,
   roleLabel,
 } from './utils/auth';
-import './App.css';
+import {
+  clearActiveTab,
+  getInitialActiveTab,
+  persistActiveTab,
+} from './utils/activeTab';
+
+const AdminDetails = lazy(() =>
+  import('./pages/AdminDetails').then((m) => ({ default: m.AdminDetails }))
+);
+const BlogsManagement = lazy(() =>
+  import('./pages/Blogs/BlogsManagement').then((m) => ({
+    default: m.BlogsManagement,
+  }))
+);
+const JobsManagement = lazy(() => import('./pages/Jobs/JobsManagement'));
+const JobApplicationsManagement = lazy(
+  () => import('./pages/JobApplications/JobApplicationsManagement')
+);
+const QueryManagement = lazy(() => import('./pages/Query/QueryManagement'));
+const WorkManagement = lazy(() => import('./pages/Ourwork/WorkManagement'));
+const ClientReviewsManagement = lazy(
+  () => import('./pages/ClientReviews/ClientReviewsManagement')
+);
 
 const emptyAdminInfo = {
   name: '',
@@ -35,62 +51,83 @@ const emptyAdminInfo = {
 function formatLoginTime() {
   const now = new Date();
   return (
-    now.toLocaleDateString('en-US', {
+    `${now.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
-    }) +
-    ' - ' +
-    now.toLocaleTimeString('en-US', {
+    })} - ${now.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
-    })
+    })}`
   );
 }
 
+function readStoredAdminInfo() {
+  const email = localStorage.getItem('logixmart_admin_email') || '';
+  if (!email || !(getAccessToken() || getRefreshToken())) return null;
+
+  return {
+    ...emptyAdminInfo,
+    email,
+    name:
+      localStorage.getItem(ADMIN_NAME_STORAGE_KEY) ||
+      displayNameFromEmail(email),
+    role: localStorage.getItem(ADMIN_ROLE_STORAGE_KEY) || '',
+    lastLogin: localStorage.getItem('logixmart_admin_last_login') || '',
+  };
+}
+
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [activeTab, setActiveTab] = useState('admin-details');
-  const [adminInfo, setAdminInfo] = useState(emptyAdminInfo);
+  const [activeTab, setActiveTabState] = useState(getInitialActiveTab);
+  const [adminInfo, setAdminInfo] = useState(
+    () => readStoredAdminInfo() ?? emptyAdminInfo
+  );
+  const [isAuthenticated, setIsAuthenticated] = useState(() =>
+    Boolean(
+      localStorage.getItem('logixmart_admin_email') &&
+        (getAccessToken() || getRefreshToken())
+    )
+  );
+
+  const setActiveTab = useCallback((tab: string) => {
+    setActiveTabState(tab);
+    persistActiveTab(tab);
+  }, []);
+
+  const resetSession = useCallback(() => {
+    setAdminInfo(emptyAdminInfo);
+    setIsAuthenticated(false);
+    clearActiveTab();
+  }, []);
 
   useEffect(() => {
-    setSessionExpiredHandler(() => {
-      setAdminInfo(emptyAdminInfo);
-      setIsAuthenticated(false);
-    });
+    const onHashChange = () => setActiveTab(getInitialActiveTab());
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, [setActiveTab]);
+
+  useEffect(() => {
+    setSessionExpiredHandler(resetSession);
 
     const restoreSession = async () => {
-      const email = localStorage.getItem('logixmart_admin_email') || '';
-      const lastLogin = localStorage.getItem('logixmart_admin_last_login') || '';
-      const role = localStorage.getItem(ADMIN_ROLE_STORAGE_KEY) || '';
-      const storedName = localStorage.getItem(ADMIN_NAME_STORAGE_KEY) || '';
-      const hasRefreshToken = Boolean(getRefreshToken());
-      const hasAccessToken = Boolean(getAccessToken());
-
-      if (!email || (!hasAccessToken && !hasRefreshToken)) {
+      const stored = readStoredAdminInfo();
+      if (!stored) {
+        setIsAuthenticated(false);
         return;
       }
 
-      if (hasRefreshToken) {
-        const valid = await ensureValidSession();
-        if (!valid) {
-          clearAuthSession();
-          return;
-        }
-      }
-
+      setAdminInfo(stored);
       setIsAuthenticated(true);
-      setAdminInfo({
-        ...emptyAdminInfo,
-        email,
-        name: storedName || displayNameFromEmail(email),
-        role,
-        lastLogin,
-      });
+      persistActiveTab(getInitialActiveTab());
+
+      if (!(await ensureValidSession())) {
+        clearAuthSession();
+        resetSession();
+      }
     };
 
-    restoreSession();
-  }, []);
+    void restoreSession();
+  }, [resetSession]);
 
   const handleUpdateAdmin = (updatedInfo: Partial<typeof adminInfo>) => {
     setAdminInfo((prev) => {
@@ -109,9 +146,11 @@ function App() {
     const lastLogin = formatLoginTime();
     const resolvedName = name || displayNameFromEmail(email);
     const resolvedRole = role || 'ADMIN';
+
     localStorage.setItem('logixmart_admin_last_login', lastLogin);
     localStorage.setItem(ADMIN_ROLE_STORAGE_KEY, resolvedRole);
     localStorage.setItem(ADMIN_NAME_STORAGE_KEY, resolvedName);
+
     setAdminInfo({
       name: resolvedName,
       email,
@@ -130,26 +169,20 @@ function App() {
       console.error('Logout error:', error);
       clearAuthSession();
     }
-    setAdminInfo(emptyAdminInfo);
-    setIsAuthenticated(false);
+    resetSession();
   };
-
-  const renderAdminPage = () => (
-    <AdminDetails
-      adminInfo={{
-        ...adminInfo,
-        role: roleLabel(adminInfo.role),
-      }}
-      onUpdateAdmin={handleUpdateAdmin}
-      canManageAdmins={isSuperAdmin(adminInfo.role)}
-    />
-  );
 
   const renderActiveContent = () => {
     switch (activeTab) {
       case 'admin-details':
       case 'admins':
-        return renderAdminPage();
+        return (
+          <AdminDetails
+            adminInfo={{ ...adminInfo, role: roleLabel(adminInfo.role) }}
+            onUpdateAdmin={handleUpdateAdmin}
+            canManageAdmins={isSuperAdmin(adminInfo.role)}
+          />
+        );
       case 'blogs':
         return <BlogsManagement />;
       case 'jobs':
@@ -163,7 +196,13 @@ function App() {
       case 'our-work':
         return <WorkManagement />;
       default:
-        return renderAdminPage();
+        return (
+          <AdminDetails
+            adminInfo={{ ...adminInfo, role: roleLabel(adminInfo.role) }}
+            onUpdateAdmin={handleUpdateAdmin}
+            canManageAdmins={isSuperAdmin(adminInfo.role)}
+          />
+        );
     }
   };
 
@@ -178,7 +217,9 @@ function App() {
       adminName={adminInfo.name}
       onLogout={handleLogout}
     >
-      {renderActiveContent()}
+      <Suspense fallback={<PageLoading message="Loading..." />}>
+        {renderActiveContent()}
+      </Suspense>
     </DashboardLayout>
   );
 }

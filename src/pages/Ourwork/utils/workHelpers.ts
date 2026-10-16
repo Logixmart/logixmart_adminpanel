@@ -14,6 +14,7 @@ export const ALLOWED_TYPES = [
 export const projectCategories = [
   'Web Development',
   'App Development',
+  'Both App/Web',
   'UI/UX Design',
   'Digital Marketing',
   'Branding',
@@ -73,12 +74,17 @@ export function pickValidImages(
 export function validateWorkForm(form: WorkFormValues): string | null {
   const title = form.title.trim();
   const description = form.description.trim();
+  const category = form.category.trim();
   const websiteUrl = form.websiteUrl.trim();
   const appStoreUrl = form.appStoreUrl.trim();
   const playStoreUrl = form.playStoreUrl.trim();
 
   if (!title) return 'Title is required.';
   if (!description) return 'Description is required.';
+  if (!category) return 'Project field is required.';
+  if (!projectCategories.includes(category)) {
+    return 'Please select a valid project field.';
+  }
   if (!isValidUrl(websiteUrl)) {
     return 'Website URL must be a valid http(s) link.';
   }
@@ -93,7 +99,7 @@ export function validateWorkForm(form: WorkFormValues): string | null {
 
 export function buildWorkFormData(
   form: WorkFormValues,
-  newFiles: File[],
+  newImagePaths: string[],
   modalMode: 'create' | 'edit',
   removedImageKeys: string[]
 ): FormData {
@@ -104,7 +110,9 @@ export function buildWorkFormData(
   formData.append('websiteUrl', form.websiteUrl.trim());
   formData.append('appStoreUrl', form.appStoreUrl.trim());
   formData.append('playStoreUrl', form.playStoreUrl.trim());
-  newFiles.forEach((file) => formData.append('images', file));
+  if (newImagePaths.length > 0) {
+    formData.append('imageUrls', JSON.stringify(newImagePaths));
+  }
 
   if (modalMode === 'edit' && removedImageKeys.length > 0) {
     formData.append('removeImages', JSON.stringify(removedImageKeys));

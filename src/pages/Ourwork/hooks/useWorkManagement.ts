@@ -16,6 +16,7 @@ import {
   getWorks,
   updateWork,
 } from '../../../api/work';
+import { uploadImages } from '../../../utils/imageUpload';
 import {
   PAGE_SIZE,
   buildWorkFormData,
@@ -240,9 +241,25 @@ export function useWorkManagement() {
 
     setIsSubmitting(true);
 
+    let newImagePaths: string[] = [];
+    if (newFiles.length > 0) {
+      try {
+        const uploaded = await uploadImages(newFiles, 'our-works');
+        newImagePaths = uploaded.map((item) => item.path);
+      } catch (uploadError) {
+        setIsSubmitting(false);
+        setFormError(
+          uploadError instanceof Error
+            ? uploadError.message
+            : 'Failed to upload images. Please try again.'
+        );
+        return;
+      }
+    }
+
     const formData = buildWorkFormData(
       form,
-      newFiles,
+      newImagePaths,
       modalMode,
       removedImageKeys
     );
