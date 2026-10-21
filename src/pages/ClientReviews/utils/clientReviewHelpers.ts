@@ -1,7 +1,10 @@
 import type { ClientReview } from '../../../api/clientReviews';
 import { formatDate } from '../../../utils/format';
+import { isEmptyHtml } from '../../../utils/html';
+import { sanitizeHtml } from '../../../utils/sanitizeHtml';
 
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const MAX_MESSAGE_LENGTH = 300;
 
 export const emptyForm = {
   clientName: '',
@@ -18,14 +21,13 @@ export function validateClientReviewForm(
 ): string | null {
   const clientName = form.clientName.trim();
   const email = form.email.trim().toLowerCase();
-  const message = form.message.trim();
 
   if (!clientName) return 'Client name is required.';
   if (!email) return 'Email is required.';
   if (!EMAIL_REGEX.test(email)) {
     return 'Please provide a valid email address.';
   }
-  if (!message) return 'Message is required.';
+  if (isEmptyHtml(form.message)) return 'Message is required.';
   return null;
 }
 
@@ -33,7 +35,7 @@ export function buildClientReviewPayload(form: ClientReviewFormValues) {
   return {
     clientName: form.clientName.trim(),
     email: form.email.trim().toLowerCase(),
-    message: form.message.trim(),
+    message: sanitizeHtml(form.message),
     companyName: form.companyName.trim(),
     designation: form.designation.trim(),
   };

@@ -131,3 +131,62 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
+.rich-text-content .tiptap {
+  min-height: 160px;
+  outline: none;
+  color: var(--color-text-primary);
+  line-height: 1.75;
+  font-size: 0.8125rem;
+}
+
+.rich-text-content .tiptap p {
+  margin: 0 0 12px;
+}
+
+.rich-text-content .tiptap h2 {
+  margin: 16px 0 8px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.rich-text-content .tiptap ul {
+  padding-left: 1.25rem;
+  list-style: disc;
+  margin: 0 0 12px;
+}
+
+.rich-text-content .tiptap ol {
+  padding-left: 1.25rem;
+  list-style: decimal;
+  margin: 0 0 12px;
+}
+
+.rich-text-content .tiptap a {
+  color: var(--color-accent-primary);
+  text-decoration: underline;
+}
+
+.rich-text-content .tiptap blockquote {
+  border-left: 3px solid var(--color-brand-border);
+  padding-left: 12px;
+  color: var(--color-text-muted);
+  margin: 0 0 12px;
+}
+
+.rich-text-content .tiptap:focus {
+  outline: none;
+}
+
+.rich-text-content .tiptap > *:last-child {
+  margin-bottom: 0;
+}
+
+.rich-text-content .tiptap strong {
+  font-weight: 700;
+}
+
+.rich-text-content .ProseMirror {
+  outline: none;
+}

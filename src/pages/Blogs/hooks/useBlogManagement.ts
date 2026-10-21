@@ -113,7 +113,10 @@ export function useBlogManagement() {
   const handleOpenEdit = (blog: Blog) => {
     setModalMode('edit');
     setSelectedBlog(blog);
-    setForm({ title: blog.title, description: blog.description });
+    setForm({
+      title: blog.title,
+      description: blog.description || '',
+    });
     setImageFile(null);
     setImagePreview(blog.imageUrl ? resolveMediaUrl(blog.imageUrl) : null);
     setFormError(null);

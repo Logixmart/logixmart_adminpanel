@@ -1,6 +1,8 @@
 import type { Work, WorkImageItem } from '../../../api/work';
 import { getWorkImageItems } from '../../../api/work';
 import { formatDate } from '../../../utils/format';
+import { htmlToPlainText, isEmptyHtml } from '../../../utils/html';
+import { sanitizeHtml } from '../../../utils/sanitizeHtml';
 
 export const PAGE_SIZE = 12;
 export const MAX_IMAGES = 5;
@@ -73,14 +75,13 @@ export function pickValidImages(
 
 export function validateWorkForm(form: WorkFormValues): string | null {
   const title = form.title.trim();
-  const description = form.description.trim();
   const category = form.category.trim();
   const websiteUrl = form.websiteUrl.trim();
   const appStoreUrl = form.appStoreUrl.trim();
   const playStoreUrl = form.playStoreUrl.trim();
 
   if (!title) return 'Title is required.';
-  if (!description) return 'Description is required.';
+  if (isEmptyHtml(form.description)) return 'Description is required.';
   if (!category) return 'Project field is required.';
   if (!projectCategories.includes(category)) {
     return 'Please select a valid project field.';
@@ -106,7 +107,7 @@ export function buildWorkFormData(
   const formData = new FormData();
   formData.append('title', form.title.trim());
   formData.append('category', form.category.trim());
-  formData.append('description', form.description.trim());
+  formData.append('description', sanitizeHtml(form.description));
   formData.append('websiteUrl', form.websiteUrl.trim());
   formData.append('appStoreUrl', form.appStoreUrl.trim());
   formData.append('playStoreUrl', form.playStoreUrl.trim());
@@ -136,7 +137,7 @@ export function filterWorks(
   return items.filter(
     ({ work }) =>
       work.title.toLowerCase().includes(query) ||
-      work.description.toLowerCase().includes(query)
+      htmlToPlainText(work.description).toLowerCase().includes(query)
   );
 }
 

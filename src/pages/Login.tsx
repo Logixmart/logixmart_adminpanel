@@ -31,6 +31,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     setIsLoading(true);
 
     const response = await loginAdmin(email, password);
+    console.log('response', response);
     setIsLoading(false);
 
     if (response.success && response.token) {
