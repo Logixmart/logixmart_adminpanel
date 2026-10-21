@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import type { Work } from '../../../api/work';
 import { formatDate } from '../../../utils/format';
+import { htmlToPlainText } from '../../../utils/html';
 import type { WorkWithImages } from '../utils/workHelpers';
 
 interface WorkCardProps {
@@ -87,7 +88,7 @@ export function WorkCard({
           {work.title}
         </h3>
         <p className="text-xs text-text-secondary leading-relaxed line-clamp-3 flex-1">
-          {work.description}
+          {htmlToPlainText(work.description)}
         </p>
 
         {(work.websiteUrl || work.appStoreUrl || work.playStoreUrl) && (

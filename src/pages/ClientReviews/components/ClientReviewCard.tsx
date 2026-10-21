@@ -1,6 +1,7 @@
 import { Calendar, Edit3, Mail, Trash2, User } from 'lucide-react';
 import type { ClientReview } from '../../../api/clientReviews';
 import { formatDate } from '../../../utils/format';
+import { htmlToPlainText } from '../../../utils/html';
 
 interface ClientReviewCardProps {
   review: ClientReview;
@@ -39,7 +40,7 @@ export function ClientReviewCard({
         </div>
 
         <p className="text-xs text-text-secondary leading-relaxed line-clamp-4 flex-1">
-          “{review.message}”
+          “{htmlToPlainText(review.message)}”
         </p>
 
         <div className="flex items-center gap-1.5 text-[11px] text-text-muted">

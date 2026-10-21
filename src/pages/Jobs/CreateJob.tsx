@@ -16,7 +16,10 @@ import {
   updateJob,
   type JobPost,
 } from '../../api/jobPost';
+import RichTextEditor from '../../components/ui/RichTextEditor';
 import { FIELD_INPUT_CLASS, FIELD_LABEL_CLASS } from '../../utils/styles';
+import { htmlToTextLines, isEmptyHtml, listToHtml } from '../../utils/html';
+import { sanitizeHtml } from '../../utils/sanitizeHtml';
 
 export interface CreateJobProps {
   mode?: 'create' | 'edit';
@@ -81,30 +84,6 @@ export default function CreateJob({
     };
   }, [mode, jobId]);
 
-  const handleListPaste = (
-    event: ClipboardEvent<HTMLTextAreaElement>,
-    field: 'responsibilities' | 'qualifications'
-  ) => {
-    event.preventDefault();
-    const pasted = normalizeListText(event.clipboardData.getData('text/plain'));
-    if (!pasted) return;
-
-    const { value } = event.currentTarget;
-    const selectionStart = event.currentTarget.selectionStart ?? value.length;
-    const selectionEnd = event.currentTarget.selectionEnd ?? value.length;
-    const before = value.slice(0, selectionStart);
-    const after = value.slice(selectionEnd);
-    const separatorBefore = before && !before.endsWith('\n') ? '\n' : '';
-    const separatorAfter = after && !after.startsWith('\n') ? '\n' : '';
-
-    setForm((prev) => ({
-      ...prev,
-      [field]: normalizeListText(
-        `${before}${separatorBefore}${pasted}${separatorAfter}${after}`
-      ),
-    }));
-  };
-
   const handleSkillsPaste = (event: ClipboardEvent<HTMLInputElement>) => {
     event.preventDefault();
     const pasted = normalizeSkillsText(event.clipboardData.getData('text/plain'));
@@ -128,30 +107,24 @@ export default function CreateJob({
     }));
   };
 
-  const autoResizeTextarea = (element: HTMLTextAreaElement | null) => {
-    if (!element) return;
-    element.style.height = 'auto';
-    element.style.height = `${element.scrollHeight}px`;
-  };
-
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError(null);
 
-    if (!form.title.trim() || !form.description.trim()) {
+    if (!form.title.trim() || isEmptyHtml(form.description)) {
       setError('Title and description are required.');
       return;
     }
 
     const payload = {
       title: form.title.trim(),
-      description: form.description.trim(),
+      description: sanitizeHtml(form.description),
       location: form.location.trim() || undefined,
       employmentType: form.employmentType.trim() || undefined,
       experience: form.experience.trim() || undefined,
       skills: parseList(form.skills),
-      responsibilities: parseList(form.responsibilities),
-      qualifications: parseList(form.qualifications),
+      responsibilities: parseHtmlList(form.responsibilities),
+      qualifications: parseHtmlList(form.qualifications),
       isActive: form.isActive,
     };
 
@@ -265,37 +238,21 @@ export default function CreateJob({
 
           <div className="flex flex-col gap-1.5 sm:col-span-2">
             <label className={labelClass}>Job Description</label>
-            <textarea
-              className={`${inputClass} resize-none min-h-[100px]`}
-              placeholder="Short overview of the role..."
+            <RichTextEditor
               value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              onChange={(html) => setForm({ ...form, description: html })}
               disabled={loading}
-              rows={4}
-              required
+              placeholder="Short overview of the role..."
             />
           </div>
 
           <div className="flex flex-col gap-1.5 sm:col-span-2">
             <label className={labelClass}>Responsibilities</label>
-            <textarea
-              ref={autoResizeTextarea}
-              className={`${inputClass} resize-none min-h-[100px]`}
-              placeholder={"One per line, e.g.\nBuild and ship product features\nCollaborate with design and QA"}
+            <RichTextEditor
               value={form.responsibilities}
-              onChange={(e) => {
-                setForm({ ...form, responsibilities: e.target.value });
-                autoResizeTextarea(e.currentTarget);
-              }}
-              onPaste={(e) => handleListPaste(e, 'responsibilities')}
-              onBlur={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  responsibilities: normalizeListText(e.target.value),
-                }))
-              }
+              onChange={(html) => setForm({ ...form, responsibilities: html })}
               disabled={loading}
-              rows={4}
+              placeholder="One per line — e.g., Build and ship product features"
             />
             <span className="text-[10px] text-text-muted">
               Paste bullet lists or numbered lists — formatting is cleaned up automatically
@@ -325,24 +282,11 @@ export default function CreateJob({
 
           <div className="flex flex-col gap-1.5 sm:col-span-2">
             <label className={labelClass}>Qualifications</label>
-            <textarea
-              ref={autoResizeTextarea}
-              className={`${inputClass} resize-none min-h-[100px]`}
-              placeholder={"One per line, e.g.\nBachelor's degree in CS or related field\n2+ years of React experience"}
+            <RichTextEditor
               value={form.qualifications}
-              onChange={(e) => {
-                setForm({ ...form, qualifications: e.target.value });
-                autoResizeTextarea(e.currentTarget);
-              }}
-              onPaste={(e) => handleListPaste(e, 'qualifications')}
-              onBlur={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  qualifications: normalizeListText(e.target.value),
-                }))
-              }
+              onChange={(html) => setForm({ ...form, qualifications: html })}
               disabled={loading}
-              rows={4}
+              placeholder="One per line — e.g., Bachelor's degree in CS or related field"
             />
             <span className="text-[10px] text-text-muted">
               Paste bullet lists or numbered lists — formatting is cleaned up automatically
@@ -439,6 +383,10 @@ function parseList(value: string): string[] {
     .filter(Boolean);
 }
 
+function parseHtmlList(html: string): string[] {
+  return parseList(htmlToTextLines(sanitizeHtml(html)));
+}
+
 function jobToForm(job: JobPost) {
   return {
     title: job.title || '',
@@ -447,8 +395,8 @@ function jobToForm(job: JobPost) {
     employmentType: job.employmentType || '',
     experience: job.experience || '',
     skills: (job.skills || []).join(', '),
-    responsibilities: (job.responsibilities || []).join('\n'),
-    qualifications: (job.qualifications || []).join('\n'),
+    responsibilities: listToHtml(job.responsibilities || []),
+    qualifications: listToHtml(job.qualifications || []),
     isActive: job.isActive,
   };
 }

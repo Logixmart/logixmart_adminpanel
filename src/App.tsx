@@ -79,6 +79,7 @@ function readStoredAdminInfo() {
 
 function App() {
   const [activeTab, setActiveTabState] = useState(getInitialActiveTab);
+  const [visitedTabs, setVisitedTabs] = useState(() => new Set([activeTab]));
   const [adminInfo, setAdminInfo] = useState(
     () => readStoredAdminInfo() ?? emptyAdminInfo
   );
@@ -91,12 +92,16 @@ function App() {
 
   const setActiveTab = useCallback((tab: string) => {
     setActiveTabState(tab);
+    setVisitedTabs((visited) =>
+      visited.has(tab) ? visited : new Set(visited).add(tab)
+    );
     persistActiveTab(tab);
   }, []);
 
   const resetSession = useCallback(() => {
     setAdminInfo(emptyAdminInfo);
     setIsAuthenticated(false);
+    setVisitedTabs(new Set());
     clearActiveTab();
   }, []);
 
@@ -172,8 +177,8 @@ function App() {
     resetSession();
   };
 
-  const renderActiveContent = () => {
-    switch (activeTab) {
+  const renderTabContent = (tab: string) => {
+    switch (tab) {
       case 'admin-details':
       case 'admins':
         return (
@@ -217,9 +222,24 @@ function App() {
       adminName={adminInfo.name}
       onLogout={handleLogout}
     >
-      <Suspense fallback={<PageLoading message="Loading..." />}>
-        {renderActiveContent()}
-      </Suspense>
+      {[...visitedTabs].map((tab) => (
+        <div
+          key={tab}
+          className={
+            activeTab === tab ? 'flex flex-1 flex-col min-h-0' : 'hidden'
+          }
+        >
+          <Suspense
+            fallback={
+              activeTab === tab ? (
+                <PageLoading message="Loading..." />
+              ) : null
+            }
+          >
+            {renderTabContent(tab)}
+          </Suspense>
+        </div>
+      ))}
     </DashboardLayout>
   );
 }

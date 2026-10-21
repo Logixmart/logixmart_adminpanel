@@ -1,8 +1,13 @@
 import React from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Modal } from '../../../components/ui/Modal';
+import RichTextEditor from '../../../components/ui/RichTextEditor';
 import { FIELD_INPUT_CLASS, FIELD_LABEL_CLASS } from '../../../utils/styles';
-import type { ClientReviewFormValues } from '../utils/clientReviewHelpers';
+import { htmlToPlainText } from '../../../utils/html';
+import {
+  MAX_MESSAGE_LENGTH,
+  type ClientReviewFormValues,
+} from '../utils/clientReviewHelpers';
 
 interface ClientReviewFormModalProps {
   isOpen: boolean;
@@ -97,17 +102,16 @@ export function ClientReviewFormModal({
 
         <div className="flex flex-col gap-1.5">
           <label className={FIELD_LABEL_CLASS}>Review Message</label>
-          <textarea
-            placeholder="Write the client testimonial..."
+          <RichTextEditor
             value={form.message}
-            onChange={(e) => onFormChange({ message: e.target.value })}
+            onChange={(html) => onFormChange({ message: html })}
             disabled={isSubmitting}
-            rows={4}
-            className={`${FIELD_INPUT_CLASS} resize-none`}
-            required
-            maxLength={300}
+            maxLength={MAX_MESSAGE_LENGTH}
+            placeholder="Write the client testimonial..."
           />
-          <p className="text-xs text-text-muted">{form.message.length} / 300</p>
+          <p className="text-xs text-text-muted">
+            {htmlToPlainText(form.message).length} / {MAX_MESSAGE_LENGTH}
+          </p>
         </div>
 
         <div className="flex gap-3 pt-3 mt-1">

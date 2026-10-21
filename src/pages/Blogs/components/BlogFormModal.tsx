@@ -1,8 +1,13 @@
 import React from 'react';
 import { AlertCircle, Loader2, Upload, X } from 'lucide-react';
 import { Modal } from '../../../components/ui/Modal';
+import RichTextEditor from '../../../components/ui/RichTextEditor';
 import { FIELD_INPUT_CLASS, FIELD_LABEL_CLASS } from '../../../utils/styles';
-import type { BlogFormValues } from '../utils/blogHelpers';
+import { countWordsFromHtml } from '../../../utils/html';
+import {
+  MAX_DESCRIPTION_WORDS,
+  type BlogFormValues,
+} from '../utils/blogHelpers';
 
 interface BlogFormModalProps {
   isOpen: boolean;
@@ -35,11 +40,14 @@ export function BlogFormModal({
   onImageChange,
   onDrop,
 }: BlogFormModalProps) {
+  const wordCount = countWordsFromHtml(form.description);
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={() => !isSubmitting && onClose()}
       title={modalMode === 'create' ? 'Create New Blog Post' : 'Edit Blog Post Details'}
+      size="lg"
     >
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         {formError && (
@@ -63,15 +71,24 @@ export function BlogFormModal({
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className={FIELD_LABEL_CLASS}>Description / Body Content</label>
-          <textarea
-            placeholder="Describe the main focus and takeaways of this article..."
+          <div className="flex items-center justify-between gap-2">
+            <label className={FIELD_LABEL_CLASS}>Description / Body Content</label>
+            <span
+              className={`text-[10px] font-medium ${
+                wordCount >= MAX_DESCRIPTION_WORDS
+                  ? 'text-accent-danger'
+                  : 'text-text-muted'
+              }`}
+            >
+              {wordCount}/{MAX_DESCRIPTION_WORDS} words
+            </span>
+          </div>
+          <RichTextEditor
             value={form.description}
-            onChange={(e) => onFormChange({ description: e.target.value })}
+            onChange={(html) => onFormChange({ description: html })}
             disabled={isSubmitting}
-            rows={4}
-            className={`${FIELD_INPUT_CLASS} resize-none`}
-            required
+            maxWords={MAX_DESCRIPTION_WORDS}
+            placeholder="Describe the main focus and takeaways of this article..."
           />
         </div>
 

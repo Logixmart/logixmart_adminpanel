@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertCircle, Loader2, Upload, X } from 'lucide-react';
 import { Modal } from '../../../components/ui/Modal';
+import RichTextEditor from '../../../components/ui/RichTextEditor';
 import type { WorkImageItem } from '../../../api/work';
 import { FIELD_INPUT_CLASS, FIELD_LABEL_CLASS } from '../../../utils/styles';
 import { MAX_IMAGES, projectCategories, type WorkFormValues } from '../utils/workHelpers';
@@ -76,14 +77,11 @@ export function WorkFormModal({
 
         <div className="flex flex-col gap-1.5">
           <label className={FIELD_LABEL_CLASS}>Description</label>
-          <textarea
-            placeholder="Describe the project, stack, and outcome..."
+          <RichTextEditor
             value={form.description}
-            onChange={(e) => onFormChange({ description: e.target.value })}
+            onChange={(html) => onFormChange({ description: html })}
             disabled={isSubmitting}
-            rows={4}
-            className={`${FIELD_INPUT_CLASS} resize-none`}
-            required
+            placeholder="Describe the project, stack, and outcome..."
           />
         </div>
 

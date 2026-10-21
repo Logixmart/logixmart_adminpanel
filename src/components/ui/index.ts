@@ -9,3 +9,4 @@ export { PageHeader } from './PageHeader';
 export { Modal } from './Modal';
 export { ImageViewer } from './ImageViewer';
 export { CompanyLogo } from './CompanyLogo';
+export { default as RichTextEditor } from './RichTextEditor';

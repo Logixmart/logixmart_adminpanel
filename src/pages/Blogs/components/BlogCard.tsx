@@ -2,6 +2,7 @@ import { Calendar, Edit3, Image as ImageIcon, Trash2 } from 'lucide-react';
 import type { Blog } from '../../../api/blogs';
 import { resolveMediaUrl } from '../../../api/http';
 import { formatDate } from '../../../utils/format';
+import { htmlToPlainText } from '../../../utils/html';
 
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format&fit=crop';
@@ -52,7 +53,7 @@ export function BlogCard({ blog, onViewImage, onEdit, onDelete }: BlogCardProps)
           {blog.title}
         </h3>
         <p className="text-xs text-text-secondary leading-relaxed line-clamp-3 flex-1">
-          {blog.description}
+          {htmlToPlainText(blog.description)}
         </p>
 
         <div className="flex items-center gap-3 pt-4 border-t border-brand-border mt-2">
