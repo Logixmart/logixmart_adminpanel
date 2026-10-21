@@ -19,7 +19,6 @@ web_modules/
 
 # TypeScript cache
 *.tsbuildinfo
-
 # Output / Build
 dist/
 dist-ssr/
@@ -33,6 +32,8 @@ tmp/
 .env.test.local
 .env.production.local
 .env.*.local
+.env
+.vscode/
 
 # Editor/IDE directories and files
 .idea/
