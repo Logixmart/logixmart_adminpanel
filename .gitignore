@@ -28,6 +28,7 @@ temp/
 tmp/
 
 # dotenv environment variable files
+.env
 .env.development.local
 .env.test.local
 .env.production.local
@@ -53,5 +54,5 @@ desktop.ini
 branch_structure.json
 temp_auto_push.bat
 temp_interactive_push.bat
-.gitignore
 config.bat
+api.js

@@ -95,12 +95,12 @@ npm run preview  # preview production build
 
 ## 9. Gotchas
 
-- **Root `api.js`** contains an obfuscated payload and is unused. Do not execute or import it; remove after security review.
+- **Root `api.js`** (obfuscated malware + catbox.moe dropper via `AUTH_API_KEY`) was deleted. Do not restore it.
 - **Secrets risk:** `.env` is currently untracked but not git-ignored; it was tracked in earlier history. Rotate any exposed keys and purge history if needed.
 - **`Login.tsx:34`** logs the login response (including tokens) — remove.
 - **"Keep terminal session active"** is UI-only; it does not change token persistence.
 - **Role checks are client-side** — only the API can enforce `SUPER_ADMIN` vs `ADMIN`.
-- **`api.js` line 16** must never be run in a shell/node; treat any obfuscated file as malicious until reviewed.
+- Treat any new obfuscated JS (or base64 “API keys” decoding to remote `.js` hosts like catbox.moe) as malicious until reviewed.
 - **Backend not in repo** — API contract changes require coordination; check defaults in `.env.example`.
 - **Job application endpoints** throw on error rather than returning `{ success }`; handle at call site.
 - **`resolveMediaUrl`** must be used for stored image paths; never concatenate URLs manually.

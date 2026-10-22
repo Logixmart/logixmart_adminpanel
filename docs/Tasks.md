@@ -21,9 +21,9 @@
 
 ## 2. P0 — Required
 
-- [ ] **Remove `api.js`** after security review; confirm no imports, then delete.
-- [ ] **Stop tracking `.env`** — add `.env` to `.gitignore`, keep `.env.example`; rotate exposed keys and purge history if needed.
-- [ ] **Remove login response log** (`src/pages/Login.tsx:34`).
+- [x] **Remove `api.js`** after security review; confirm no imports, then delete.
+- [x] **Stop tracking `.env`** — add `.env` to `.gitignore`, keep `.env.example`; rotate exposed keys and purge history if needed.
+- [x] **Remove login response log** (`src/pages/Login.tsx:34`).
 - [ ] **Verify server-side role enforcement** for `SUPER_ADMIN`-only admin-account actions.
 - [ ] **Sanitize all rich-text render paths** (blogs) and confirm stored output is safe.
 - [ ] **Fix build/lint** and merge current branch to `main`.
@@ -60,9 +60,9 @@
 
 | Issue | Impact | Ref |
 |---|---|---|
-| Obfuscated unused `api.js` in repo root | Security risk / confusion | Root `api.js` |
-| `.env` not git-ignored; secrets in history | Credential exposure | `.gitignore`, git history |
-| Login response logged to console | Token/PII leak in devtools | `src/pages/Login.tsx:34` |
+| ~~Obfuscated unused `api.js`~~ | Removed | Root `api.js` |
+| ~~`.env` tracked~~ | Untracked + gitignored; rotate keys if still exposed in history | `.gitignore`, git history |
+| ~~Login response logged to console~~ | Removed | `src/pages/Login.tsx` |
 | No tests or CI | Regressions undetected | Repo-wide |
 | Client-only role gating | UI bypass possible | `App.tsx`, `AdminDetails.tsx` |
 | Stock Vite README | Misleading onboarding | `README.md` |
