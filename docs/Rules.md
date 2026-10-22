@@ -7,7 +7,7 @@
 1. **Do not touch unrelated files.** Keep diffs scoped to the task.
 2. **Read before writing.** Match existing patterns; reuse before adding.
 3. **No secrets in code, docs, or git.** Use `.env` locally; commit only `.env.example`.
-4. **Never execute or import `api.js`** (unused obfuscated file).
+4. **Never reintroduce obfuscated root scripts** (former malware `api.js` was removed).
 5. **The API is the source of truth** for data and authorization.
 6. **No new dependency** without a clear need and team agreement.
 7. **Docs are part of the change** — update `docs/` when behaviour or structure changes.

@@ -145,4 +145,4 @@ Application statuses: `PENDING → REVIEWING → SHORTLISTED → INTERVIEW → S
 - Backend contract and DB schema are external; changes must be coordinated.
 - No automated tests, CI/CD, or containerization in-repo.
 - `.env` must never be committed; only `.env.example` is safe.
-- Root `api.js` is unused dead code with an obfuscated payload and should be removed after security review.
+- Root `api.js` (obfuscated malware dropper) was removed; do not restore it.
